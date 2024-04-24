@@ -90,7 +90,7 @@ public extension STPathAttributes {
     /// 文件属性字典中的键，其值表示文件的创建日期。
     /// The key in a file attribute dictionary whose value indicates the file's creation date.
     var creationDate: Date {
-        get { get(.creationDate, default: Date()) }
+        get { get(.creationDate, default: .distantPast) }
         set { set(.creationDate, newValue) }
     }
 
@@ -146,7 +146,7 @@ public extension STPathAttributes {
     /// 文件属性字典中的键，其值指示文件的上次修改日期。
     /// The key in a file attribute dictionary whose value indicates the file’s last modified date.
     var modificationDate: Date {
-        get { get(.modificationDate, default: Date()) }
+        get { get(.modificationDate, default: .distantPast) }
         set { set(.modificationDate, newValue) }
     }
 

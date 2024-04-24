@@ -137,6 +137,38 @@ public extension STFile {
         return self
     }
     
+    /// 追加数据到文件末尾(文件不存在则会创建文件)
+    /// - Parameter data: 数据
+    func append(data: Data?) throws {
+        guard let data = data else {
+            return
+        }
+        
+        if !isExist {
+            try create(with: data)
+            return
+        }
+        
+        let handle = try handle(.writing)
+        try handle.seekToEnd()
+        try handle.write(contentsOf: data)
+    }
+    
+}
+
+public extension STFile {
+    
+    /// 覆盖文件内容(文件不存在则会创建文件)
+    /// - Parameter with: 数据
+    @discardableResult
+    func overlay(model: Encodable, encoder: JSONEncoder) throws -> Self {
+        return try self.overlay(with: encoder.encode(model))
+    }
+    
+    func overlay(with data: String?, using: String.Encoding = .utf8) throws {
+        try overlay(with: data?.data(using: using))
+    }
+    
     /// 覆盖文件内容(文件不存在则会创建文件)
     /// - Parameter with: 数据
     @discardableResult
@@ -148,28 +180,6 @@ public extension STFile {
         try delete()
         try create(with: data)
         return self
-    }
-    
-    func overlay(with data: String?, using: String.Encoding = .utf8) throws {
-        try overlay(with: data?.data(using: using))
-    }
-    
-    /// 追加数据到文件末尾(文件不存在则会创建文件)
-    /// - Parameter data: 数据
-    @available(macOS 10.15.4, iOS 13.4, watchOS 6.2, tvOS 13.4, *)
-    func append(data: Data?) throws {
-        if !isExist {
-            try create(with: data)
-            return
-        }
-        
-        guard let data = data,
-              let handle = FileHandle(forWritingAtPath: path) else {
-            return
-        }
-        
-        try handle.seekToEnd()
-        try handle.write(contentsOf: data)
     }
     
 }

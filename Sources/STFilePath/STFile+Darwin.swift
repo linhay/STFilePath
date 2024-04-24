@@ -66,7 +66,7 @@ public extension STFile.System {
     }
     
     /// 4k对齐
-    private func alignmentPageSize(from size: Int) -> Int {
+    func alignmentPageSize(from size: Int) -> Int {
         let pageSize = Int(vm_page_size)
         let count = size / pageSize + size % pageSize == 0 ? 0 : 1
         return pageSize * count
@@ -84,43 +84,6 @@ public extension STFile.System {
         if fsync(descriptor) == -1 {
            throw STPathError(posix: Darwin.errno)
         }
-    }
-    
-    func mmap(prot: MMAPProt = [.read, .write],
-              type: MMAPType = .file,
-              shareType: MMAPShareType = .share,
-              size: Int? = nil,
-              offset: Int = 0) throws -> MMAP {
-        
-        guard filePath.isExist else {
-            throw STPathError(message: "Cannot open '\(filePath.url.absoluteURL)'")
-        }
-        
-        let descriptor = try open(flag1: .readAndWrite, flag2: nil, mode: nil)
-        do {
-            let info = try stat(descriptor: descriptor)
-            let fileSize = info.st_size
-            let size = alignmentPageSize(from: size ?? Int(fileSize))
-            
-            guard size > 0 else {
-                throw STPathError(message: "size 必须大于 0")
-            }
-            
-            try truncate(descriptor: descriptor, size: size)
-            try sync(descriptor: descriptor)
-            
-            return try MMAP(descriptor: descriptor,
-                            prot: prot,
-                            type: type,
-                            shareType: shareType,
-                            fileSize: fileSize,
-                            size: size,
-                            offset: offset)
-        } catch {
-            close(descriptor)
-            throw error
-        }
-        
     }
     
 }
@@ -195,51 +158,6 @@ public extension STFile.System {
         public static let directory = OpenFlag(rawValue: O_DIRECTORY)
         
         public let rawValue: Int32
-        public init(rawValue: Int32) {
-            self.rawValue = rawValue
-        }
-    }
-    
-    struct MMAPType: OptionSet {
-        public let rawValue: Int32
-        
-        /// Mapped from a file or device
-        /// 从文件或设备映射
-        public static let file = MMAPType(rawValue: MAP_FILE)
-        
-        /// Allocated from anonymous virtual memory
-        public static let anon = MMAPType(rawValue: MAP_ANON)
-        
-        /// Allocated from anonymous virtual memory
-        /// 建立匿名映射，此时会忽略参数fd，不涉及文件，而且映射区域无法和其他进程共享
-        public static let anonymous = MMAPType(rawValue: MAP_ANONYMOUS)
-        
-        public init(rawValue: Int32) {
-            self.rawValue = rawValue
-        }
-    }
-    
-    struct MMAPShareType: OptionSet {
-        /// 对应射区域的写入数据会复制回文件内，而且允许其他映射该文件的进程共享。
-        public static let share     = MMAPShareType(rawValue: MAP_SHARED)
-        /// 对应射区域的写入操作会产生一个映射文件的复制，即私人的"写入时复制" (copy on write)对此区域作的任何修改都不会写回原来的文件内容
-        public static let `private` = MMAPShareType(rawValue: MAP_PRIVATE)
-        public static let copy      = MMAPShareType(rawValue: MAP_COPY)
-        
-        public let rawValue: Int32
-        public init(rawValue: Int32) {
-            self.rawValue = rawValue
-        }
-    }
-    
-    struct MMAPProt: OptionSet {
-        public let rawValue: Int32
-        
-        public static let none  = MMAPProt(rawValue: 0 << 0)
-        public static let read  = MMAPProt(rawValue: 1 << 0)
-        public static let write = MMAPProt(rawValue: 1 << 1)
-        public static let exec  = MMAPProt(rawValue: 1 << 2)
-        
         public init(rawValue: Int32) {
             self.rawValue = rawValue
         }
