@@ -30,6 +30,10 @@ public class STFolderBackup {
     public struct Options {
         public var watcher: STFolderWatcher.Options
         public var targetFolders: [STFolder]
+        public init(watcher: STFolderWatcher.Options, targetFolders: [STFolder]) {
+            self.watcher = watcher
+            self.targetFolders = targetFolders
+        }
     }
     
     public let folder: STFolder

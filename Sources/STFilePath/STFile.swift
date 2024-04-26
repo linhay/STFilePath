@@ -154,6 +154,52 @@ public extension STFile {
         try handle.write(contentsOf: data)
     }
     
+
+    func write(handle: FileHandle, stream: AsyncThrowingStream<Data, Error>) async throws -> FileHandle {
+        // 逐个写入数据块
+        for try await chunk in stream {
+           try handle.write(contentsOf: chunk)
+        }
+        return handle
+    }
+
+    func readStream(handle: FileHandle) throws -> AsyncThrowingStream<Data, Error> {
+        let (stream, continuation) = AsyncThrowingStream<Data, Error>.makeStream()
+        Task {
+            do {
+                while let data = try handle.read(upToCount: 1024) {
+                    if data.isEmpty {
+                        break
+                    }
+                    try await continuation.yield(data)
+                }
+                continuation.finish()
+            } catch {
+                continuation.finish(throwing: error)
+            }
+        }
+        return stream
+    }
+    
+}
+
+public extension Array where Element == STFile {
+    
+    @discardableResult
+    func joined(to target: STFile) async throws -> STFile {
+        try target.overlay(with: .init())
+        let to = try target.handle(.writing)
+        defer { try? to.close() }
+
+        for file in self {
+            let from = try file.handle(.reading)
+            defer { try? from.close() }
+            try await target.write(handle: to, stream: file.readStream(handle: from))
+        }
+        try to.close()
+        return target
+    }
+    
 }
 
 public extension STFile {
