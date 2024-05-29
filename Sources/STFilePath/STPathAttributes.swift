@@ -27,6 +27,7 @@ public struct STPathNameComponents {
     public var name: String
     public var `extension`: String?
     public var filename: String { [name, self.extension].compactMap({ $0 }).joined(separator: ".") }
+    public var isHidden: Bool { name.hasPrefix(".") }
     
     public init(_ name: String) {
         let lastPathComponent = name.split(separator: "/", omittingEmptySubsequences: true).last ?? ""

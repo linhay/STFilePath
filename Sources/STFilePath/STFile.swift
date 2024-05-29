@@ -98,7 +98,7 @@ public extension STFile {
     }
     
     func decode<T>(_ tranformed: (_ data: Data) throws -> T) throws -> T {
-       try tranformed(try Data(contentsOf: url, options: []))
+        try tranformed(try Data(contentsOf: url, options: []))
     }
     
     @available(macOS 10.15.4, iOS 13.4, watchOS 6.2, tvOS 13.4, *)
@@ -153,32 +153,32 @@ public extension STFile {
         try handle.seekToEnd()
         try handle.write(contentsOf: data)
     }
-    
 
-    func write(handle: FileHandle, stream: AsyncThrowingStream<Data, Error>) async throws -> FileHandle {
-        // 逐个写入数据块
-        for try await chunk in stream {
-           try handle.write(contentsOf: chunk)
-        }
-        return handle
+    struct StreamSlice {
+        public let offset: UInt64
+        public let data: Data
     }
 
-    func readStream(handle: FileHandle) throws -> AsyncThrowingStream<Data, Error> {
-        let (stream, continuation) = AsyncThrowingStream<Data, Error>.makeStream()
-        Task {
-            do {
-                while let data = try handle.read(upToCount: 1024) {
-                    if data.isEmpty {
-                        break
-                    }
-                    try await continuation.yield(data)
+    func readStream(handle: FileHandle, 
+                    chunkSize: Int = 1,
+                    slice: (_ slice: StreamSlice) async throws -> Void,
+                    finish: ((_ handle: FileHandle) async throws -> Void)? = nil) async throws {
+        do {
+            var offset = try handle.offset()
+            while let data = try handle.read(upToCount: chunkSize) {
+                if data.isEmpty {
+                    break
                 }
-                continuation.finish()
-            } catch {
-                continuation.finish(throwing: error)
+                
+                try await slice(.init(offset: offset, data: data))
+                try handle.seek(toOffset: offset + UInt64(chunkSize))
+                offset = try handle.offset()
             }
+            try await finish?(handle)
+        } catch {
+            try await finish?(handle)
+            throw error
         }
-        return stream
     }
     
 }
@@ -190,11 +190,13 @@ public extension Array where Element == STFile {
         try target.overlay(with: .init())
         let to = try target.handle(.writing)
         defer { try? to.close() }
-
+        
         for file in self {
-            let from = try file.handle(.reading)
-            defer { try? from.close() }
-            try await target.write(handle: to, stream: file.readStream(handle: from))
+            try await file.readStream(handle: file.handle(.reading)) { slice in
+                try to.write(contentsOf: slice.data)
+            } finish: { handle in
+                try handle.close()
+            }
         }
         try to.close()
         return target
@@ -207,7 +209,7 @@ public extension STFile {
     /// 覆盖文件内容(文件不存在则会创建文件)
     /// - Parameter with: 数据
     @discardableResult
-    func overlay(model: Encodable, encoder: JSONEncoder) throws -> Self {
+    func overlay(model: Encodable, encoder: JSONEncoder = .init()) throws -> Self {
         return try self.overlay(with: encoder.encode(model))
     }
     
