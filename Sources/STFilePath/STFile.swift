@@ -158,6 +158,14 @@ public extension STFile {
         public let offset: UInt64
         public let data: Data
     }
+    
+    func write(handle: FileHandle, offset: UInt64 = 0, stream: AsyncThrowingStream<Data, any Error>) async throws {
+        try handle.seek(toOffset: offset)
+        for try await data in stream {
+            try handle.write(contentsOf: data)
+        }
+        try handle.close()
+    }
 
     func readStream(handle: FileHandle, 
                     chunkSize: Int = 1,
