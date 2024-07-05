@@ -159,10 +159,15 @@ public extension STFile {
         public let data: Data
     }
     
-    func write(handle: FileHandle, offset: UInt64 = 0, stream: AsyncThrowingStream<Data, any Error>) async throws {
+    func write(handle: FileHandle,
+               offset: UInt64 = 0,
+               stream: AsyncThrowingStream<Data, any Error>,
+               progress: ((_ offset: UInt64) async throws -> Void)? = nil) async throws {
         try handle.seek(toOffset: offset)
+        try await progress?(offset)
         for try await data in stream {
             try handle.write(contentsOf: data)
+            try await progress?(try handle.offset())
         }
         try handle.close()
     }
