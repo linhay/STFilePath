@@ -102,6 +102,8 @@ public extension STPathProtocol {
     var asFile: STFile? {
         if let type = self as? STFile {
             return type
+        } else if let type = self as? STPath {
+            return .init(url)
         } else if type == .file {
             return .init(url)
         } else {
@@ -112,6 +114,8 @@ public extension STPathProtocol {
     var asFolder: STFolder? {
         if let type = self as? STFolder {
             return type
+        } else if let type = self as? STPath {
+            return .init(url)
         } else if type == .folder {
             return .init(url)
         } else {

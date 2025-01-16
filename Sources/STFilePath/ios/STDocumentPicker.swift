@@ -12,11 +12,11 @@ import UniformTypeIdentifiers
 @available(iOS 14.0, *)
 public class STDocumentPicker: NSObject, UIDocumentPickerDelegate {
     
-    public let finishEvent: (_ paths: [STPath]) -> Void
+    public let finishEvent: @MainActor (_ paths: [STPath]) async throws -> Void
     public let types: [UTType]
-    open var allowsMultipleSelection: Bool = true
+    open private(set) var allowsMultipleSelection: Bool = false
     
-    public init(types: [UTType], finishEvent: @escaping (_ paths: [STPath]) -> Void) {
+    public init(types: [UTType], finishEvent: @MainActor @escaping (_ paths: [STPath]) async throws -> Void) {
         self.types = types
         self.finishEvent = finishEvent
     }
@@ -41,15 +41,19 @@ public class STDocumentPicker: NSObject, UIDocumentPickerDelegate {
                 newURLs.append(url)
             }
         }
-        
-        finishEvent(newURLs.map(STPath.init))
-        urls.forEach { url in
-            url.stopAccessingSecurityScopedResource()
+        Task {
+            try await finishEvent(newURLs.map(STPath.init))
+//            urls.forEach { url in
+//                url.stopAccessingSecurityScopedResource()
+//            }
         }
+
     }
 
-    public func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
-        finishEvent([])
+    public func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) async throws {
+        Task {
+            try await finishEvent([])
+        }
     }
     
     open func show(in source: UIViewController) -> Self {
