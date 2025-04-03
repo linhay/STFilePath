@@ -144,7 +144,7 @@ public extension STFile {
             return
         }
         
-        if !isExist {
+        if (!isExist) {
             try create(with: data)
             return
         }
@@ -153,7 +153,7 @@ public extension STFile {
         try handle.seekToEnd()
         try handle.write(contentsOf: data)
     }
-
+    
     struct StreamSlice {
         public let offset: UInt64
         public let data: Data
@@ -171,8 +171,33 @@ public extension STFile {
         }
         try handle.close()
     }
+    
+    func readLines(progress: ((_ row: Int) -> Void)? = nil,
+                   splitBy: [String] = ["\n", "\r"],
+                   _ call: (_ line: String) async throws -> Void) async throws {
+        var data = Data()
+        var row = 0
+        try await readStream(handle: self.handle(.reading)) { slice in
+            if let char = String(data: slice.data, encoding: .utf8),
+               splitBy.contains(char),
+               let string = String(data: data, encoding: .utf8) {
+                try await call(string)
+                row += 1
+                progress?(row)
+                data = Data()
+            } else {
+                data += slice.data
+            }
+        }
+        if let string = String(data: data, encoding: .utf8), !string.isEmpty {
+            row += 1
+            progress?(row)
+            try await call(string)
+        }
+        progress
+    }
 
-    func readStream(handle: FileHandle, 
+    func readStream(handle: FileHandle,
                     chunkSize: Int = 1,
                     slice: (_ slice: StreamSlice) async throws -> Void,
                     finish: ((_ handle: FileHandle) async throws -> Void)? = nil) async throws {
@@ -184,8 +209,8 @@ public extension STFile {
                 }
                 
                 try await slice(.init(offset: offset, data: data))
-                try handle.seek(toOffset: offset + UInt64(chunkSize))
-                offset = try handle.offset()
+                try handle.seek(toOffset: offset + UInt64(data.count))
+                offset = offset + UInt64(data.count)
             }
             try await finish?(handle)
         } catch {
@@ -234,7 +259,7 @@ public extension STFile {
     /// - Parameter with: 数据
     @discardableResult
     func overlay(with data: Data?) throws -> Self {
-        if !isExist {
+        if (!isExist) {
             try create(with: data)
             return self
         }
