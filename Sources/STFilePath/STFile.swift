@@ -194,7 +194,6 @@ public extension STFile {
             progress?(row)
             try await call(string)
         }
-        progress
     }
 
     func readStream(handle: FileHandle,

@@ -67,7 +67,11 @@ public extension STFolder {
     /// - Parameter name: 文件夹名
     /// - Returns: STFile
     func folder(_ name: String) -> STFolder {
-        STFolder(url.appendingPathComponent(name, isDirectory: true))
+        var name = name
+        if name.hasPrefix("/") {
+            name.removeFirst()
+        }
+        return STFolder(url.appendingPathComponent(name, isDirectory: true))
     }
     
     /// 当前文件夹下的路径 (校验存在性)
