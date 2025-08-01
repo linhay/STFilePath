@@ -35,6 +35,7 @@ struct DownloadableFileTests {
         #expect(fetchedModel2 != model1)
     }
 
+#if canImport(Compression)
     @Test("Compression Transformation")
     func testCompression() async throws {
         let testFolder = try createTestFolder()
@@ -56,4 +57,5 @@ struct DownloadableFileTests {
         let decompressedData = try await downloadableFile.fetch()
         #expect(decompressedData == originalData)
     }
+#endif
 }

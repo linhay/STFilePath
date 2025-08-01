@@ -9,6 +9,7 @@ import Foundation
 import STFilePath
 import Testing
 
+#if canImport(Compression)
 struct CompressionTest {
     
     @Test func testCompressionRoundTrip() throws {
@@ -23,3 +24,4 @@ struct CompressionTest {
     }
 
 }
+#endif

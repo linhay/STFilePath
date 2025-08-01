@@ -55,6 +55,7 @@ public extension DownloadableFile {
         DFFileMap(file: self, fetch: fetch, save: save)
     }
     
+#if canImport(Compression)
     /// [en] Compresses and decompresses the file data using the specified algorithm.
     /// [zh] 使用指定的算法压缩和解压缩文件数据。
     /// - Parameter algorithm: The compression algorithm to use.
@@ -66,6 +67,7 @@ public extension DownloadableFile {
             try STComparator.compress(model, algorithm: algorithm)
         }
     }
+#endif
     
     /// [en] Maps the file data to a `Codable` type.
     /// [zh] 将文件数据映射到 `Codable` 类型。
