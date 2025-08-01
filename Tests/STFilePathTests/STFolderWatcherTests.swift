@@ -8,6 +8,8 @@ struct STFolderWatcherTests {
     @available(iOS 16.0, *)
     @Test("Folder Watcher Operations")
     func testWatcher() async throws {
+        try await Task.sleep(for: .seconds(2))
+
         let testFolder = try createTestFolder()
         defer { try? testFolder.delete() }
 
@@ -25,14 +27,14 @@ struct STFolderWatcherTests {
         #expect(change.file.url.path.replacingOccurrences(of: "/private/var", with: "/var") == file1.url.path.replacingOccurrences(of: "/private/var", with: "/var"))
 
         // 2. Test file modification
-        try await Task.sleep(for: .milliseconds(200))
+        try await Task.sleep(for: .seconds(1))
         try file1.overlay(with: "world".data(using: .utf8))
         change = try await iterator.next()!
         #expect(change.kind == .changed)
         #expect(change.file.url.path.replacingOccurrences(of: "/private/var", with: "/var") == file1.url.path.replacingOccurrences(of: "/private/var", with: "/var"))
 
         // 3. Test file deletion
-        try await Task.sleep(for: .milliseconds(200))
+        try await Task.sleep(for: .seconds(1))
         try file1.delete()
         change = try await iterator.next()!
         #expect(change.kind == .deleted)

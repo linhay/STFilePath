@@ -1,3 +1,4 @@
+
 // MIT License
 //
 // Copyright (c) 2020 linhey
@@ -94,6 +95,49 @@ public struct STPathPermission: OptionSet, Comparable, Sendable {
         }
         
         self.init(list)
+    }
+    
+}
+
+
+public extension STPathPermission {
+    
+    /// [en] A struct that represents the permissions of a path on a POSIX system.
+    /// [zh] 一个表示 POSIX 系统上路径权限的结构体。
+    struct Posix: OptionSet, Comparable, Sendable {
+        
+        public static func < (lhs: STPathPermission.Posix, rhs: STPathPermission.Posix) -> Bool {
+            lhs.rawValue < rhs.rawValue
+        }
+        
+        public let rawValue: UInt16
+        
+        public init(rawValue: UInt16) {
+            self.rawValue = rawValue
+        }
+        
+        public static let ownerRead      = Posix(rawValue: 0o400)
+        public static let ownerWrite     = Posix(rawValue: 0o200)
+        public static let ownerExecute   = Posix(rawValue: 0o100)
+        public static let ownerAll: Posix = [.ownerRead, .ownerWrite, .ownerExecute]
+        
+        public static let groupRead      = Posix(rawValue: 0o040)
+        public static let groupWrite     = Posix(rawValue: 0o020)
+        public static let groupExecute   = Posix(rawValue: 0o010)
+        public static let groupAll: Posix = [.groupRead, .groupWrite, .groupExecute]
+        
+        public static let othersRead     = Posix(rawValue: 0o004)
+        public static let othersWrite    = Posix(rawValue: 0o002)
+        public static let othersExecute  = Posix(rawValue: 0o001)
+        public static let othersAll: Posix = [.othersRead, .othersWrite, .othersExecute]
+        
+        public static let all: Posix = [.ownerAll, .groupAll, .othersAll]
+        public static let `default`: Posix = [.ownerAll, .groupRead, .groupExecute, .othersRead, .othersExecute]
+        
+        public init(fileURL: URL) throws {
+            let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
+            self.init(rawValue: attributes[.posixPermissions] as? UInt16 ?? 0)
+        }
     }
     
 }
