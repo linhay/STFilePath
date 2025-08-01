@@ -22,21 +22,21 @@ struct STFolderWatcherTests {
         try file1.create(with: "hello".data(using: .utf8))
         var change = try await iterator.next()!
         #expect(change.kind == .added)
-        #expect(change.file == file1)
+        #expect(change.file.url.path.replacingOccurrences(of: "/private/var", with: "/var") == file1.url.path.replacingOccurrences(of: "/private/var", with: "/var"))
 
         // 2. Test file modification
         try await Task.sleep(for: .milliseconds(200))
         try file1.overlay(with: "world".data(using: .utf8))
         change = try await iterator.next()!
         #expect(change.kind == .changed)
-        #expect(change.file == file1)
+        #expect(change.file.url.path.replacingOccurrences(of: "/private/var", with: "/var") == file1.url.path.replacingOccurrences(of: "/private/var", with: "/var"))
 
         // 3. Test file deletion
         try await Task.sleep(for: .milliseconds(200))
         try file1.delete()
         change = try await iterator.next()!
         #expect(change.kind == .deleted)
-        #expect(change.file == file1)
+        #expect(change.file.url.path.replacingOccurrences(of: "/private/var", with: "/var") == file1.url.path.replacingOccurrences(of: "/private/var", with: "/var"))
         
         watcher.stopMonitoring()
     }

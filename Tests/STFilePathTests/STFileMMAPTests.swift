@@ -62,6 +62,7 @@ struct STFileMMAPTests {
         defer { try? testFolder.delete() }
         
         let file = testFolder.file("mmap_typesafe.bin")
+        try file.create()
         try file.setSize(16) // 16 bytes
 
         try file.withMmap { mmap in
@@ -88,12 +89,15 @@ struct STFileMMAPTests {
         defer { try? testFolder.delete() }
         
         let file = testFolder.file("mmap_bounds.txt")
+        try file.create()
         try file.setSize(10)
         
-        try file.withMmap { mmap in
-            let data = "This string is too long".data(using: .utf8)!
-            // This should throw an error
-            try mmap.write(data, at: 0)
+        #expect(throws: STPathError.self) {
+            try file.withMmap { mmap in
+                let data = "This string is too long".data(using: .utf8)!
+                // This should throw an error
+                try mmap.write(data, at: 0)
+            }
         }
     }
 
