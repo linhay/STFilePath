@@ -22,23 +22,31 @@
 
 import Foundation
 
+/// [en] A struct that represents the permissions of a path.
+/// [zh] 一个表示路径权限的结构体。
 public struct STPathPermission: OptionSet, Comparable {
     
     public static func < (lhs: STPathPermission, rhs: STPathPermission) -> Bool {
         lhs.rawValue < rhs.rawValue
     }
     
-    // 不存在标记
+    /// [en] No permissions.
+    /// [zh] 没有权限。
     public static let none       = STPathPermission([])
-    // 存在标记，表示所操作的文件路径是存在的
+    /// [en] The path exists.
+    /// [zh] 路径存在。
     public static let exists     = STPathPermission(rawValue: 1 << 0)
-    // 可读标记，表示文件可读
+    /// [en] The path is readable.
+    /// [zh] 路径可读。
     public static let readable   = STPathPermission(rawValue: 1 << 1)
-    // 可写标记，表示文件可写
+    /// [en] The path is writable.
+    /// [zh] 路径可写。
     public static let writable   = STPathPermission(rawValue: 1 << 2)
-    // 可执行标记，表示文件可执行
+    /// [en] The path is executable.
+    /// [zh] 路径可执行。
     public static let executable = STPathPermission(rawValue: 1 << 3)
-    // 可删除标记，表示文件可删除
+    /// [en] The path is deletable.
+    /// [zh] 路径可删除。
     public static let deletable  = STPathPermission(rawValue: 1 << 4)
 
     
@@ -48,10 +56,16 @@ public struct STPathPermission: OptionSet, Comparable {
         self.rawValue = rawValue
     }
     
+    /// [en] Initializes a new `STPathPermission` instance from a URL.
+    /// [zh] 从 URL 初始化一个新的 `STPathPermission` 实例。
+    /// - Parameter url: The URL of the path.
     public init(url: URL) {
         self.init(path: url.path)
     }
     
+    /// [en] Initializes a new `STPathPermission` instance from a path string.
+    /// [zh] 从路径字符串初始化一个新的 `STPathPermission` 实例。
+    /// - Parameter path: The path string.
     public init(path: String) {
         let manager = FileManager.default
         var list = [STPathPermission]()

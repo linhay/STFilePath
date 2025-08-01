@@ -24,10 +24,16 @@ import Foundation
 
 public struct STPath: STPathProtocol, Codable {
     
+    /// [en] A unique identifier for the path.
+    /// [zh] 路径的唯一标识符。
     public var id: URL { url }
     
+    /// [en] The default file manager.
+    /// [zh] 默认的文件管理器。
     private var manager: FileManager { FileManager.default }
     
+    /// [en] The type of the file system item at the path.
+    /// [zh] 路径上文件系统项的类型。
     public var type: STFilePathItemType {
         guard isExist else {
             return .notExist
@@ -42,6 +48,8 @@ public struct STPath: STPathProtocol, Codable {
         return .notExist
     }
     
+    /// [en] The reference type of the file system item.
+    /// [zh] 文件系统项的引用类型。
     public var referenceType: STFilePathReferenceType? {
         switch type {
         case .file:
@@ -53,21 +61,35 @@ public struct STPath: STPathProtocol, Codable {
         }
     }
     
+    /// [en] The URL of the path.
+    /// [zh] 路径的 URL。
     public var url: URL
     
+    /// [en] Initializes a new `STPath` instance with the specified URL.
+    /// [zh] 使用指定的 URL 初始化一个新的 `STPath` 实例。
+    /// - Parameter url: The URL of the path.
     public init(_ url: URL) {
         self.url = url.standardized
     }
     
+    /// [en] Initializes a new `STPath` instance with the specified path string.
+    /// [zh] 使用指定的路径字符串初始化一个新的 `STPath` 实例。
+    /// - Parameter path: The path string.
     public init(_ path: String) {
         self.init(Self.standardizedPath(path))
     }
     
+    /// [en] Initializes a new `STPath` instance from a decoder.
+    /// [zh] 从解码器初始化一个新的 `STPath` 实例。
+    /// - Parameter decoder: The decoder to read data from.
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         self.url = try container.decode(URL.self)
     }
     
+    /// [en] Encodes this `STPath` instance into the given encoder.
+    /// [zh] 将此 `STPath` 实例编码到给定的编码器中。
+    /// - Parameter encoder: The encoder to write data to.
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(self.url)

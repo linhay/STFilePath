@@ -26,6 +26,8 @@ import AppKit
 
 public extension STPathProtocol {
     
+    /// [en] Shows the file or folder in the Finder.
+    /// [zh] 在 Finder 中显示文件或文件夹。
     func showInFinder() {
         guard let referenceType = STPath(url).referenceType else {
             return
@@ -38,6 +40,13 @@ public extension STPathProtocol {
         }
     }
     
+    /// [en] Opens a panel to select files or folders in the Finder.
+    /// [zh] 打开一个面板以在 Finder 中选择文件或文件夹。
+    /// - Parameters:
+    ///   - folder: The folder to open the panel in.
+    ///   - support: The types of items that can be selected.
+    ///   - allowsMultipleSelection: Whether multiple items can be selected.
+    /// - Returns: An array of the selected paths.
     static func selectInFinder(_ folder: URL,
                                support: [STFilePathItemType] = [.file, .folder],
                                allowsMultipleSelection: Bool = true) -> [STPath] {
@@ -59,6 +68,12 @@ public extension STPathProtocol {
 @available(macCatalyst, unavailable)
 public extension STFolder {
     
+    /// [en] Opens a panel to select files or folders in the Finder, starting in the current folder.
+    /// [zh] 打开一个面板以在 Finder 中选择文件或文件夹，从当前文件夹开始。
+    /// - Parameters:
+    ///   - support: The types of items that can be selected.
+    ///   - allowsMultipleSelection: Whether multiple items can be selected.
+    /// - Returns: An array of the selected paths.
     func selectInFinder(support: [STFilePathItemType] = [.file, .folder],
                         allowsMultipleSelection: Bool = true) -> [STPath] {
         return Self.selectInFinder(url,

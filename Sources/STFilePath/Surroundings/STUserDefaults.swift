@@ -7,6 +7,8 @@
 
 import Foundation
 
+/// [en] A struct that represents a key for `UserDefaults`.
+/// [zh] 一个表示 `UserDefaults` 键的结构体。
 public struct STUserDefaultsKeys: ExpressibleByStringLiteral {
     
     public let value: String
@@ -21,11 +23,26 @@ public struct STUserDefaultsKeys: ExpressibleByStringLiteral {
     
 }
 
+/// [en] A protocol for types that can be stored in `UserDefaults`.
+/// [zh] 一个可存储在 `UserDefaults` 中的类型的协议。
 public protocol STUserDefaultsValue {
+    /// [en] Writes the value to `UserDefaults`.
+    /// [zh] 将值写入 `UserDefaults`。
+    /// - Parameters:
+    ///   - userDefault: The `UserDefaults` instance to write to.
+    ///   - key: The key to write the value for.
     func write(to userDefault: UserDefaults, for key: String)
+    /// [en] Reads the value from `UserDefaults`.
+    /// [zh] 从 `UserDefaults` 读取值。
+    /// - Parameters:
+    ///   - userDefault: The `UserDefaults` instance to read from.
+    ///   - key: The key to read the value for.
+    /// - Returns: The value, or `nil` if the value is not in `UserDefaults`.
     static func read(from userDefault: UserDefaults, for key: String) -> Self?
 }
 
+/// [en] A property wrapper for `UserDefaults`.
+/// [zh] `UserDefaults` 的属性包装器。
 @propertyWrapper
 public struct STUserDefaults<T: STUserDefaultsValue> {
     
@@ -33,6 +50,12 @@ public struct STUserDefaults<T: STUserDefaultsValue> {
     let defaultValue: T
     let userDefault: UserDefaults
     
+    /// [en] Initializes a new `STUserDefaults` instance.
+    /// [zh] 初始化一个新的 `STUserDefaults` 实例。
+    /// - Parameters:
+    ///   - key: The key to store the value for.
+    ///   - defaultValue: The default value to use if the key is not in `UserDefaults`.
+    ///   - userDefault: The `UserDefaults` instance to use.
     public init(_ key: STUserDefaultsKeys,
                 default: T,
                 userDefault: UserDefaults = .standard) {

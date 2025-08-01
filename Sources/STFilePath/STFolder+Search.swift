@@ -9,21 +9,28 @@ import Foundation
 
 public extension STFolder {
     
-    // 用于指定搜索的条件
+    /// [en] Predicates for searching in a folder.
+    /// [zh] 在文件夹中搜索的谓词。
     enum SearchPredicate {
-        // 跳过子目录和后代文件夹
+        /// [en] Skip subdirectory and descendant folders.
+        /// [zh] 跳过子目录和后代文件夹。
         case skipsSubdirectoryDescendants
-        // 跳过包和其后代文件夹
+        /// [en] Skip packages and their descendant folders.
+        /// [zh] 跳过包及其后代文件夹。
         case skipsPackageDescendants
-        // 跳过隐藏的文件
+        /// [en] Skip hidden files.
+        /// [zh] 跳过隐藏文件。
         case skipsHiddenFiles
-        // 在目录中包括后代目录
+        /// [en] Include descendant directories in the enumeration.
+        /// [zh] 在枚举中包括后代目录。
         @available(iOS 13.0, *) @available(macOS 10.15, *) @available(tvOS 13.0, *)
         case includesDirectoriesPostOrder
-        // 生成相对路径的URL
+        /// [en] Generate relative path URLs.
+        /// [zh] 生成相对路径的 URL。
         @available(iOS 13.0, *) @available(macOS 10.15, *) @available(tvOS 13.0, *)
         case producesRelativePathURLs
-        // 自定义搜索条件，参数为 STPath 类型，返回值为 Bool 类型
+        /// [en] Custom search predicate.
+        /// [zh] 自定义搜索谓词。
         case custom((STPath) throws -> Bool)
     }
     
@@ -84,6 +91,10 @@ extension Array where Element == STFolder.SearchPredicate {
 
 public extension STFolder {
 
+    /// [en] Checks if the folder contains the given path.
+    /// [zh] 检查文件夹是否包含给定的路径。
+    /// - Parameter predicate: The path to check for.
+    /// - Returns: `true` if the folder contains the path, `false` otherwise.
     @inlinable
     func contains<Element: STPathProtocol>(_ predicate: Element) -> Bool {
         let components = self.url.pathComponents
@@ -94,18 +105,29 @@ public extension STFolder {
 
 public extension STFolder {
     
+    /// [en] Returns all files in the folder that match the given predicates.
+    /// [zh] 返回文件夹中与给定谓词匹配的所有文件。
+    /// - Parameter predicates: The predicates to filter the files with.
+    /// - Returns: An array of files.
+    /// - Throws: An error if the files cannot be retrieved.
     func files(_ predicates: [SearchPredicate] = []) throws -> [STFile] {
         try subFilePaths(predicates).compactMap(\.asFile)
     }
     
+    /// [en] Returns all folders in the folder that match the given predicates.
+    /// [zh] 返回文件夹中与给定谓词匹配的所有文件夹。
+    /// - Parameter predicates: The predicates to filter the folders with.
+    /// - Returns: An array of folders.
+    /// - Throws: An error if the folders cannot be retrieved.
     func folders(_ predicates: [SearchPredicate] = []) throws -> [STFolder] {
         try subFilePaths(predicates).compactMap(\.asFolder)
     }
     
-    /// 递归获取文件夹中所有文件/文件夹
-    /// - Throws: FilePathError - "目标路径不是文件夹类型"
-    /// - Parameter predicates: 查找条件
-    /// - Returns: [FilePath]
+    /// [en] Recursively gets all files and folders in the folder.
+    /// [zh] 递归获取文件夹中的所有文件和文件夹。
+    /// - Parameter predicates: The predicates to filter the items with.
+    /// - Returns: An array of paths.
+    /// - Throws: An error if the items cannot be retrieved.
     func allSubFilePaths(_ predicates: [SearchPredicate] = []) throws -> [STPath] {
         let (systemPredicates, customPredicates) = predicates.split()
         guard let enumerator = manager.enumerator(at: url,
@@ -127,10 +149,11 @@ public extension STFolder {
         return list
     }
     
-    /// 获取当前文件夹中文件/文件夹
-    /// - Throws: FilePathError - "目标路径不是文件夹类型"
-    /// - Parameter predicates: 查找条件
-    /// - Returns: [FilePath]
+    /// [en] Gets all files and folders in the current folder.
+    /// [zh] 获取当前文件夹中的所有文件和文件夹。
+    /// - Parameter predicates: The predicates to filter the items with.
+    /// - Returns: An array of paths.
+    /// - Throws: An error if the items cannot be retrieved.
     func subFilePaths(_ predicates: [SearchPredicate] = []) throws -> [STPath] {
         let (systemPredicates, customPredicates) = predicates.split()
         return try manager
@@ -142,9 +165,12 @@ public extension STFolder {
     }
     
     
-    /// 文件扫描
-    /// - Parameter scanSubFolder: 是否扫描子文件夹
-    /// - Returns: 文件序列
+    /// [en] Scans the folder for files.
+    /// [zh] 扫描文件夹以查找文件。
+    /// - Parameters:
+    ///   - folderFilter: A filter to apply to folders.
+    ///   - fileFilter: A filter to apply to files.
+    /// - Returns: An asynchronous stream of files.
     @available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
     func fileScan(folderFilter: @escaping ((STFolder) async throws -> Bool) = { _ in true },
                   fileFilter: @escaping ((STFile) async throws -> Bool) = { _ in true }) -> AsyncThrowingStream<STFile, Error> {

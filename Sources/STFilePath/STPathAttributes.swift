@@ -22,23 +22,35 @@
 
 import Foundation
 
+/// [en] A struct that represents the components of a path name.
+/// [zh] 一个表示路径名称组件的结构体。
 public struct STPathNameComponents {
     
+    /// [en] The name of the file or folder.
+    /// [zh] 文件或文件夹的名称。
     public var name: String
+    /// [en] The extension of the file.
+    /// [zh] 文件的扩展名。
     public var `extension`: String?
+    /// [en] The full file name, including the extension.
+    /// [zh] 完整的文件名，包括扩展名。
     public var filename: String { [name, self.extension].compactMap({ $0 }).joined(separator: ".") }
+    /// [en] Whether the file or folder is hidden.
+    /// [zh] 文件或文件夹是否是隐藏的。
     public var isHidden: Bool { name.hasPrefix(".") }
     
     public init(_ name: String) {
         let lastPathComponent = name.split(separator: "/", omittingEmptySubsequences: true).last ?? ""
         let components = lastPathComponent.split(separator: ".", omittingEmptySubsequences: false)
 
-        // 如果是隐藏文件且只有一个点，那么整个 lastPathComponent 是文件名
+        // [en] If it is a hidden file and has only one dot, then the entire lastPathComponent is the file name.
+        // [zh] 如果是隐藏文件且只有一个点，那么整个 lastPathComponent 是文件名。
         if components.count == 1 {
             self.name = String(lastPathComponent)
             self.extension = nil
         } else {
-            // 否则，除去第一个点的剩余部分是文件名，第二部分是扩展名
+            // [en] Otherwise, the part after the first dot is the file name, and the second part is the extension.
+            // [zh] 否则，除去第一个点的剩余部分是文件名，第二部分是扩展名。
             self.name = (lastPathComponent.hasPrefix(".") ? "." : "") + components.dropLast().joined(separator: ".")
             self.extension = components.last?.description
         }
@@ -47,6 +59,8 @@ public struct STPathNameComponents {
 
 
 // MARK: - Type
+/// [en] A class that provides access to the attributes of a path.
+/// [zh] 一个提供对路径属性访问的类。
 public class STPathAttributes {
     
     private let url: URL
@@ -59,122 +73,127 @@ public class STPathAttributes {
 
 public extension STPathAttributes {
     
-    /// 文件名
+    /// [en] The name of the file or folder.
+    /// [zh] 文件或文件夹的名称。
     var name: String { url.lastPathComponent.replacingOccurrences(of: ":", with: "/") }
     
+    /// [en] The components of the path name.
+    /// [zh] 路径名称的组件。
     var nameComponents: STPathNameComponents { .init(name) }
    
-    // isApplicationKey
+    /// [en] The attributes of the item.
+    /// [zh] 项目的属性。
     var attributes: [FileAttributeKey: Any] {
         (try? FileManager.default.attributesOfItem(atPath: url.path)) ?? [:]
     }
     
-    /// 返回一个字符串数组，表示给定路径的用户可见组件。
+    /// [en] An array of strings representing the user-visible components of the path.
+    /// [zh] 一个字符串数组，表示路径的用户可见组件。
     var componentsToDisplay: [String] {
         FileManager.default.componentsToDisplay(forPath: url.path) ?? []
     }
     
-    /// 文件属性字典中的键，其值指示文件是否为只读。
-    /// The key in a file attribute dictionary whose value indicates whether the file is read-only.
+    /// [en] The key in a file attribute dictionary whose value indicates whether the file is read-only.
+    /// [zh] 文件属性字典中的键，其值指示文件是否为只读。
     var isReadOnly: Bool {
         get { get(.appendOnly, default: false) }
         set { set(.appendOnly, newValue) }
     }
 
-    /// 文件属性字典中的键，其值指示文件是否繁忙。
-    /// The key in a file attribute dictionary whose value indicates whether the file is busy.
+    /// [en] The key in a file attribute dictionary whose value indicates whether the file is busy.
+    /// [zh] 文件属性字典中的键，其值指示文件是否繁忙。
     var isBusy: Bool {
         get { get(.busy, default: false) }
         set { set(.busy, newValue) }
     }
 
-    /// 文件属性字典中的键，其值表示文件的创建日期。
-    /// The key in a file attribute dictionary whose value indicates the file's creation date.
+    /// [en] The key in a file attribute dictionary whose value indicates the file's creation date.
+    /// [zh] 文件属性字典中的键，其值表示文件的创建日期。
     var creationDate: Date {
         get { get(.creationDate, default: .distantPast) }
         set { set(.creationDate, newValue) }
     }
 
-    /// 文件属性字典中的键，其值指示文件所在设备的标识符。
-    /// The key in a file attribute dictionary whose value indicates the identifier for the device on which the file resides.
+    /// [en] The key in a file attribute dictionary whose value indicates the identifier for the device on which the file resides.
+    /// [zh] 文件属性字典中的键，其值指示文件所在设备的标识符。
     var deviceIdentifier: Int {
         get { get(.deviceIdentifier, default: 0) }
         set { set(.deviceIdentifier, newValue) }
     }
 
-    /// 文件属性字典中的键，其值指示文件的扩展名是否隐藏。
-    /// The key in a file attribute dictionary whose value indicates whether the file’s extension is hidden.
+    /// [en] The key in a file attribute dictionary whose value indicates whether the file’s extension is hidden.
+    /// [zh] 文件属性字典中的键，其值指示文件的扩展名是否隐藏。
     var extensionHidden: Bool {
         get { get(.extensionHidden, default: false) }
         set { set(.extensionHidden, newValue) }
     }
 
-    /// 文件属性字典中的键，其值指示文件的组 ID。
-    /// The key in a file attribute dictionary whose value indicates the file’s group ID.
+    /// [en] The key in a file attribute dictionary whose value indicates the file’s group ID.
+    /// [zh] 文件属性字典中的键，其值指示文件的组 ID。
     var groupOwnerAccountID: Int {
         get { get(.groupOwnerAccountID, default: 0) }
         set { set(.groupOwnerAccountID, newValue) }
     }
 
-    /// 文件属性字典中的键，其值表示文件所有者的组名。
-    /// The key in a file attribute dictionary whose value indicates the group name of the file’s owner.
+    /// [en] The key in a file attribute dictionary whose value indicates the group name of the file’s owner.
+    /// [zh] 文件属性字典中的键，其值表示文件所有者的组名。
     var groupOwnerAccountName: String {
         get { get(.groupOwnerAccountName, default: "") }
         set { set(.groupOwnerAccountName, newValue) }
     }
 
-    /// 文件属性字典中的键，其值指示文件的 HFS 创建者代码。
-    /// The key in a file attribute dictionary whose value indicates the file’s HFS creator code.
+    /// [en] The key in a file attribute dictionary whose value indicates the file’s HFS creator code.
+    /// [zh] 文件属性字典中的键，其值指示文件的 HFS 创建者代码。
     var hfsCreatorCode: Int {
         get { get(.hfsCreatorCode, default: 0) }
         set { set(.hfsCreatorCode, newValue) }
     }
 
-    /// 文件属性字典中的键，其值指示文件的 HFS 类型代码。
-    /// The key in a file attribute dictionary whose value indicates the file’s HFS type code.
+    /// [en] The key in a file attribute dictionary whose value indicates the file’s HFS type code.
+    /// [zh] 文件属性字典中的键，其值指示文件的 HFS 类型代码。
     var hfsTypeCode: Int {
         get { get(.hfsTypeCode, default: 0) }
         set { set(.hfsTypeCode, newValue) }
     }
 
-    /// 文件属性字典中的键，其值指示文件是否可变。
-    /// The key in a file attribute dictionary whose value indicates whether the file is mutable.
+    /// [en] The key in a file attribute dictionary whose value indicates whether the file is mutable.
+    /// [zh] 文件属性字典中的键，其值指示文件是否可变。
     var isImmutable: Bool {
         get { get(.immutable, default: true) }
         set { set(.immutable, newValue) }
     }
 
-    /// 文件属性字典中的键，其值指示文件的上次修改日期。
-    /// The key in a file attribute dictionary whose value indicates the file’s last modified date.
+    /// [en] The key in a file attribute dictionary whose value indicates the file’s last modified date.
+    /// [zh] 文件属性字典中的键，其值指示文件的上次修改日期。
     var modificationDate: Date {
         get { get(.modificationDate, default: .distantPast) }
         set { set(.modificationDate, newValue) }
     }
 
-    /// 文件属性字典中的键，其值表示文件所有者的帐户 ID。
-    /// The key in a file attribute dictionary whose value indicates the file’s owner's account ID.
+    /// [en] The key in a file attribute dictionary whose value indicates the file’s owner's account ID.
+    /// [zh] 文件属性字典中的键，其值表示文件所有者的帐户 ID。
     var ownerAccountID: Int {
         get { get(.ownerAccountID, default: 0) }
         set { set(.ownerAccountID, newValue) }
     }
 
-    /// 文件属性字典中的键，其值表示文件所有者的名称。
-    /// The key in a file attribute dictionary whose value indicates the name of the file’s owner.
+    /// [en] The key in a file attribute dictionary whose value indicates the name of the file’s owner.
+    /// [zh] 文件属性字典中的键，其值表示文件所有者的名称。
     var ownerAccountName: String {
        get { get(.ownerAccountName, default: "") }
        set { set(.ownerAccountName, newValue) }
    }
         
-    /// 文件属性字典中的键，其值指示文件的 Posix 权限。
-    /// The key in a file attribute dictionary whose value indicates the file’s Posix permissions.
+    /// [en] The key in a file attribute dictionary whose value indicates the file’s Posix permissions.
+    /// [zh] 文件属性字典中的键，其值指示文件的 Posix 权限。
     var posixPermissions: Int {
         get { get(.posixPermissions, default: 0) }
         set { set(.posixPermissions, newValue) }
     }
     
     #if !os(Linux)
-    /// 文件属性字典中的键，其值标识此文件的保护级别。
-    /// The key in a file attribute dictionary whose value identifies the protection level for this file.
+    /// [en] The key in a file attribute dictionary whose value identifies the protection level for this file.
+    /// [zh] 文件属性字典中的键，其值标识此文件的保护级别。
     var protectionKey: Int {
         get { get(.protectionKey, default: 0) }
         set { set(.protectionKey, newValue) }
@@ -182,64 +201,64 @@ public extension STPathAttributes {
     #endif
     
     
-    /// 文件属性字典中的键，其值表示文件的引用计数。
-    /// The key in a file attribute dictionary whose value indicates the file’s reference count.
+    /// [en] The key in a file attribute dictionary whose value indicates the file’s reference count.
+    /// [zh] 文件属性字典中的键，其值表示文件的引用计数。
     var referenceCount: Int {
         get { get(.referenceCount, default: 0) }
         set { set(.referenceCount, newValue) }
     }
     
-    /// 文件属性字典中的键，其值指示文件的大小（以字节为单位）。
-    /// The key in a file attribute dictionary whose value indicates the file’s size in bytes.
+    /// [en] The key in a file attribute dictionary whose value indicates the file’s size in bytes.
+    /// [zh] 文件属性字典中的键，其值指示文件的大小（以字节为单位）。
     var size: Int {
         get { get(.size, default: 0) }
         set { set(.size, newValue) }
     }
     
-    /// 文件属性字典中的键，其值表示文件的文件系统文件号。
-    /// The key in a file attribute dictionary whose value indicates the file’s filesystem file number.
+    /// [en] The key in a file attribute dictionary whose value indicates the file’s filesystem file number.
+    /// [zh] 文件属性字典中的键，其值表示文件的文件系统文件号。
     var systemFileNumber: Int {
         get { get(.systemFileNumber, default: 0) }
         set { set(.systemFileNumber, newValue) }
     }
     
-    /// 文件系统属性字典中的键，其值表示文件系统中的空闲节点数。
-    /// The key in a file system attribute dictionary whose value indicates the number of free nodes in the file system.
+    /// [en] The key in a file system attribute dictionary whose value indicates the number of free nodes in the file system.
+    /// [zh] 文件系统属性字典中的键，其值表示文件系统中的空闲节点数。
     var systemFreeNodes: Int {
         get { get(.systemFreeNodes, default: 0) }
         set { set(.systemFreeNodes, newValue) }
     }
 
-    /// 文件系统属性字典中的键，其值指示文件系统上的可用空间量。
-    /// The key in a file system attribute dictionary whose value indicates the amount of free space on the file system.
+    /// [en] The key in a file system attribute dictionary whose value indicates the amount of free space on the file system.
+    /// [zh] 文件系统属性字典中的键，其值指示文件系统上的可用空间量。
     var systemFreeSize: Int  {
         get { get(.systemFreeSize, default: 0) }
         set { set(.systemFreeSize, newValue) }
     }
        
-    /// 文件系统属性字典中的键，其值表示文件系统中的节点数。
-    /// The key in a file system attribute dictionary whose value indicates the number of nodes in the file system.
+    /// [en] The key in a file system attribute dictionary whose value indicates the number of nodes in the file system.
+    /// [zh] 文件系统属性字典中的键，其值表示文件系统中的节点数。
     var systemNodes: Int {
         get { get(.systemNodes, default: 0) }
         set { set(.systemNodes, newValue) }
     }
    
-    /// 文件系统属性字典中的键，其值表示文件系统的文件系统编号。
-    /// The key in a file system attribute dictionary whose value indicates the filesystem number of the file system.
+    /// [en] The key in a file system attribute dictionary whose value indicates the filesystem number of the file system.
+    /// [zh] 文件系统属性字典中的键，其值表示文件系统的文件系统编号。
     var systemNumber: Int {
         get { get(.systemNumber, default: 0) }
         set { set(.systemNumber, newValue) }
     }
     
-    /// 文件系统属性字典中的键，其值指示文件系统的大小。
-    /// The key in a file system attribute dictionary whose value indicates the size of the file system.
+    /// [en] The key in a file system attribute dictionary whose value indicates the size of the file system.
+    /// [zh] 文件系统属性字典中的键，其值指示文件系统的大小。
     var systemSize: Int {
         get { get(.systemSize, default: 0) }
         set { set(.systemSize, newValue) }
     }
         
-    /// 文件属性字典中的键，其值指示文件的类型。
-    /// The key in a file attribute dictionary whose value indicates the file’s type.
+    /// [en] The key in a file attribute dictionary whose value indicates the file’s type.
+    /// [zh] 文件属性字典中的键，其值指示文件的类型。
     var type: FileAttributeType {
         get { get(.type, default: .typeUnknown) }
         set { set(.type, newValue) }

@@ -9,12 +9,19 @@ import Foundation
 
 // MARK: - Cache
 
+/// [en] A key-value cache that can store values in memory and on disk.
+/// [zh] 一个键值缓存，可以将值存储在内存和磁盘上。
 public final class STKVCache<Key: Hashable, Value> {
     
     private let wrapped = NSCache<WrappedKey, Entry>()
     private let dateProvider: () -> Date
     private let keyTracker = KeyTracker()
         
+    /// [en] Initializes a new `STKVCache` instance.
+    /// [zh] 初始化一个新的 `STKVCache` 实例。
+    /// - Parameters:
+    ///   - dateProvider: A closure that provides the current date.
+    ///   - maximumEntryCount: The maximum number of entries to store in the cache.
     public init(dateProvider: @escaping () -> Date = Date.init,
                 maximumEntryCount: Int = .max) {
         self.dateProvider = dateProvider
@@ -27,10 +34,20 @@ public final class STKVCache<Key: Hashable, Value> {
 
 public extension STKVCache {
     
+    /// [en] Returns the value for the given key.
+    /// [zh] 返回给定键的值。
+    /// - Parameter key: The key to look up.
+    /// - Returns: The value for the key, or `nil` if the key is not in the cache.
      func value(of key: Key) -> Value? {
         return entry(forKey: key)?.value
     }
     
+    /// [en] Inserts a value into the cache.
+    /// [zh] 将一个值插入缓存。
+    /// - Parameters:
+    ///   - value: The value to insert.
+    ///   - key: The key to associate with the value.
+    ///   - lifeTime: The lifetime of the value in the cache. If `nil`, the value will not expire.
      func insert(_ value: Value, forKey key: Key, lifeTime: TimeInterval? = nil) {
         let date: Date?
         if let lifeTime = lifeTime {
@@ -43,6 +60,11 @@ public extension STKVCache {
         keyTracker.keys.insert(key)
     }
     
+    /// [en] Updates the value for the given key.
+    /// [zh] 更新给定键的值。
+    /// - Parameters:
+    ///   - value: The new value.
+    ///   - key: The key to update.
      func update(_ value: Value, forKey key: Key) {
         if self.value(of: key) != nil {
             remove(by: key)
@@ -50,6 +72,9 @@ public extension STKVCache {
         insert(value, forKey: key)
     }
     
+    /// [en] Removes the value for the given key.
+    /// [zh] 删除给定键的值。
+    /// - Parameter key: The key to remove.
      func remove(by key: Key) {
         wrapped.removeObject(forKey: WrappedKey(key))
     }
@@ -175,14 +200,28 @@ extension STKVCache: Codable where Key: Codable, Value: Codable {
 
 public extension STKVCache where Key: Codable, Value: Codable {
     
+    /// [en] Saves the cache to disk.
+    /// [zh] 将缓存保存到磁盘。
+    /// - Parameters:
+    ///   - file: The file to save the cache to.
+    ///   - encoder: The encoder to use.
+    /// - Throws: An error if the cache cannot be saved.
     func saveToDisk(with file: STFile, encoder: JSONEncoder = .init()) throws {
         let data = try encoder.encode(self)
         try file.overlay(with: data)
     }
     
+    /// [en] Decodes a cache from a file.
+    /// [zh] 从文件解码缓存。
+    /// - Parameters:
+    ///   - file: The file to decode the cache from.
+    ///   - decoder: The decoder to use.
+    /// - Returns: The decoded cache.
+    /// - Throws: An error if the cache cannot be decoded.
     static func decode(from file: STFile, decoder: JSONDecoder = .init()) throws -> Self {
         let data  = try file.data()
        return try decoder.decode(Self.self, from: data)
     }
     
 }
+

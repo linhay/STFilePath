@@ -1,8 +1,12 @@
 import Foundation
 import Compression
 
+/// [en] A struct that provides compression and decompression functionality.
+/// [zh] 一个提供压缩和解压缩功能的结构体。
 public struct STComparator {
     
+    /// [en] The compression algorithm to use.
+    /// [zh] 要使用的压缩算法。
     public enum Algorithm: Sendable {
         case lz4
         case zlib
@@ -19,16 +23,36 @@ public struct STComparator {
         }
     }
 
+    /// [en] Errors that can occur during compression or decompression.
+    /// [zh] 压缩或解压缩过程中可能发生的错误。
     public enum Errors: Error {
+        /// [en] Compression failed.
+        /// [zh] 压缩失败。
         case compressionFailed
+        /// [en] Decompression failed.
+        /// [zh] 解压缩失败。
         case decompressionFailed
     }
 
     
+    /// [en] Compresses the given data using the specified algorithm.
+    /// [zh] 使用指定的算法压缩给定的数据。
+    /// - Parameters:
+    ///   - data: The data to compress.
+    ///   - algorithm: The compression algorithm to use.
+    /// - Returns: The compressed data.
+    /// - Throws: An error if compression fails.
     public static func compress(_ data: Data, algorithm: Algorithm) throws -> Data {
         return try perform(data: data, operation: COMPRESSION_STREAM_ENCODE, algorithm: algorithm)
     }
 
+    /// [en] Decompresses the given data using the specified algorithm.
+    /// [zh] 使用指定的算法解压缩给定的数据。
+    /// - Parameters:
+    ///   - data: The data to decompress.
+    ///   - algorithm: The compression algorithm to use.
+    /// - Returns: The decompressed data.
+    /// - Throws: An error if decompression fails.
     public static func decompress(_ data: Data, algorithm: Algorithm) throws -> Data {
         return try perform(data: data, operation: COMPRESSION_STREAM_DECODE, algorithm: algorithm)
     }
