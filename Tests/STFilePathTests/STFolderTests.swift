@@ -56,9 +56,9 @@ struct STFolderTests {
         try testFolder.delete()
     }
     
+    #if !os(Linux)
     @Test("Sanbox Operations")
     func testSanboxOperations() throws {
-
         let home = try STFolder(sanbox: .home)
         #expect(home.url.path == NSHomeDirectory())
         
@@ -66,5 +66,6 @@ struct STFolderTests {
         let expectedDocuments = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
         #expect(documents.url == expectedDocuments)
     }
+    #endif
     
 }
