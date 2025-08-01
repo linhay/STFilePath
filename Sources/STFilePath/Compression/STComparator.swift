@@ -37,7 +37,7 @@ public struct STComparator {
 
 private extension STComparator {
     
-     static func perform(data: Data, operation: compression_stream_operation, algorithm: Algorithm) throws -> Data {
+    static func perform(data: Data, operation: compression_stream_operation, algorithm: Algorithm) throws -> Data {
         let streamPointer = UnsafeMutablePointer<compression_stream>.allocate(capacity: 1)
         defer { streamPointer.deallocate() }
 
@@ -83,6 +83,5 @@ private extension STComparator {
             return output
         }
     }
-
     
 }

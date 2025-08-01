@@ -14,7 +14,7 @@ public enum STFilePathReferenceType: Identifiable, STPathProtocol {
     
     public init(_ url: URL) throws {
         guard let item = STPath(url).referenceType else {
-            throw STPathError(message: "不存在真实扽文件路径")
+            throw STPathError(message: "不存在真实文件路径")
         }
         self = item
     }
