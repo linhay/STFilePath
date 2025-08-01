@@ -22,7 +22,7 @@
 
 import Foundation
 
-public struct STPath: STPathProtocol, Codable {
+public struct STPath: STPathProtocol, Codable, Sendable {
     
     /// [en] A unique identifier for the path.
     /// [zh] 路径的唯一标识符。

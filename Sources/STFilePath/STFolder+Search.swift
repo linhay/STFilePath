@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by linhey on 2023/3/15.
 //
@@ -90,7 +90,7 @@ extension Array where Element == STFolder.SearchPredicate {
 }
 
 public extension STFolder {
-
+    
     /// [en] Checks if the folder contains the given path.
     /// [zh] 检查文件夹是否包含给定的路径。
     /// - Parameter predicate: The path to check for.
@@ -160,11 +160,13 @@ public extension STFolder {
             .contentsOfDirectory(at: url, includingPropertiesForKeys: nil, options: systemPredicates)
             .compactMap({ STPath($0) })
             .filter({ item -> Bool in
-               return try customPredicates.contains(where: { try $0(item) == false }) == false
+                return try customPredicates.contains(where: { try $0(item) == false }) == false
             })
     }
     
-    
+    typealias FileFilter = @Sendable (_ file: STFile) throws -> Bool
+    typealias FolderFilter = @Sendable (_ folder: STFolder) throws -> Bool
+
     /// [en] Scans the folder for files.
     /// [zh] 扫描文件夹以查找文件。
     /// - Parameters:
@@ -172,39 +174,25 @@ public extension STFolder {
     ///   - fileFilter: A filter to apply to files.
     /// - Returns: An asynchronous stream of files.
     @available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
-    func fileScan(folderFilter: @escaping ((STFolder) async throws -> Bool) = { _ in true },
-                  fileFilter: @escaping ((STFile) async throws -> Bool) = { _ in true }) -> AsyncThrowingStream<STFile, Error> {
-        .init { continuation in
-            Task {
-                do {
-                    let urls = try manager.contentsOfDirectory(at: url, includingPropertiesForKeys: nil)
-                    for url in urls {
-                        do {
-                            let filePath = STPath(url)
-                            switch filePath.referenceType {
-                            case .file(let file):
-                                if try await fileFilter(file) {
-                                    continuation.yield(file)
-                                }
-                            case .folder(let folder):
-                                if try await folderFilter(folder) {
-                                    for try await item in folder.fileScan(folderFilter: folderFilter) {
-                                        continuation.yield(item)
-                                    }
-                                }
-                            case .none:
-                                continue
-                            }
-                        } catch {
-                            debugPrint("FilePath Scan: ", error.localizedDescription)
-                        }
-                    }
-                    continuation.finish()
-                } catch {
-                    continuation.finish(throwing: error)
+    func files(matching fileFilter: FileFilter, in folderFilter: FolderFilter) throws -> [STFile] {
+        let items = try subFilePaths()
+        var result = [STFile]()
+        for item in items {
+            switch item.referenceType {
+            case .file(let file):
+                if try fileFilter(file) {
+                    result.append(file)
                 }
+            case .folder(let folder):
+                if try folderFilter(folder) {
+                    let subFiles = try folder.files(matching: fileFilter, in: folderFilter)
+                    result.append(contentsOf: subFiles)
+                }
+            case .none:
+                continue
             }
         }
+        return result
     }
     
 }

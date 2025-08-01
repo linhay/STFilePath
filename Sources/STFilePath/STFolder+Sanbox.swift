@@ -76,8 +76,8 @@ public extension STFolder {
     /// - Parameter applicationGroup: The application group identifier.
     /// - Throws: An error if the application group is not valid.
     init(applicationGroup: String) throws {
-        guard let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: applicationGroup) {
-            throw STPathError(message: "[en] Application group cannot be identified \n [zh] applicationGroup 无法识别")
+        guard let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: applicationGroup) else {
+            throw STPathError(message: "[en] Application group cannot be identified [zh] applicationGroup 无法识别")
         }
         self.init(url)
     }
@@ -87,8 +87,8 @@ public extension STFolder {
     /// - Parameter ubiquityContainerIdentifier: The ubiquity container identifier.
     /// - Throws: An error if iCloud is not available.
     init(ubiquityContainerIdentifier: String) throws {
-        guard let url = FileManager.default.url(forUbiquityContainerIdentifier: ubiquityContainerIdentifier) {
-            throw STPathError(message: "[en] iCloud is not available \n [zh] iCloud 不可用")
+        guard let url = FileManager.default.url(forUbiquityContainerIdentifier: ubiquityContainerIdentifier) else {
+            throw STPathError(message: "[en] iCloud is not available [zh] iCloud 不可用")
         }
         self.init(url)
     }

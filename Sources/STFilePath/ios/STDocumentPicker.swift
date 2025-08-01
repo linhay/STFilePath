@@ -45,7 +45,7 @@ public class STDocumentPicker: NSObject, UIDocumentPickerDelegate {
     
     public func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard urls.contains(where: { $0.startAccessingSecurityScopedResource() == false }) == false else {
-            assertionFailure("[en] Authorization failed \n [zh] 授权失败")
+            assertionFailure("[en] Authorization failed [zh] 授权失败")
             return
         }
         

@@ -28,21 +28,21 @@ public extension STFile {
     
     /// [en] Provides access to Darwin-specific file operations.
     /// [zh] 提供对 Darwin 特定文件操作的访问。
-    var system: System { System(filePath: self) }
-        
-    class System {
-        
-        let filePath: STFile
-        
-        init(filePath: STFile) {
-            self.filePath = filePath
-        }
-        
+    var system: STFileSystem { STFileSystem(filePath: self) }
+    
+}
+
+public struct STFileSystem: Sendable {
+    
+    public let filePath: STFile
+    
+    public init(filePath: STFile) {
+        self.filePath = filePath
     }
     
 }
 
-public extension STFile.System {
+public extension STFileSystem {
 
     /// [en] Opens the file with the specified flags and mode.
     /// [zh] 使用指定的标志和模式打开文件。
@@ -85,9 +85,19 @@ public extension STFile.System {
     /// - Parameter size: The size to align.
     /// - Returns: The aligned size.
     func alignmentPageSize(from size: Int) -> Int {
-        let pageSize = Int(vm_page_size)
-        let count = size / pageSize + size % pageSize == 0 ? 0 : 1
-        return pageSize * count
+        var pageSize: vm_size_t = 0
+        let result = host_page_size(mach_host_self(), &pageSize)
+        guard result == KERN_SUCCESS else {
+            return size // fallback：失败就不对齐
+        }
+        
+        let pageSizeInt = Int(pageSize)
+        let remainder = size % pageSizeInt
+        if remainder == 0 {
+            return size
+        } else {
+            return size + (pageSizeInt - remainder)
+        }
     }
     
     /// [en] Truncates the file to the specified size.
@@ -114,11 +124,11 @@ public extension STFile.System {
     
 }
 
-public extension STFile.System {
+public extension STFileSystem {
     
     /// [en] The mode to open the file with.
     /// [zh] 打开文件的模式。
-    struct OpenMode: OptionSet {
+    struct OpenMode: OptionSet, Sendable {
         /// [en] S_IRWXU 00700 permission, which means the file owner has read, write, and execute permissions.
         /// [zh] S_IRWXU 00700 权限，表示文件所有者具有读、写和执行权限。
         public static let irwxu  = OpenMode(rawValue: S_IRWXU)
@@ -167,7 +177,7 @@ public extension STFile.System {
     
     /// [en] The type of access to the file.
     /// [zh] 对文件的访问类型。
-    public enum OpenType: Int32 {
+    enum OpenType: Int32 {
         /// [en] O_RDONLY Open the file for reading only.
         /// [zh] O_RDONLY 以只读方式打开文件。
         case readOnly     = 0
@@ -182,7 +192,7 @@ public extension STFile.System {
     
     /// [en] Flags for opening a file.
     /// [zh] 打开文件的标志。
-    public struct OpenFlag: OptionSet {
+    struct OpenFlag: OptionSet, Sendable {
         /// [en] If the file does not exist, it will be created automatically.
         /// [zh] 若欲打开的文件不存在则自动建立该文件。
         public static let create   = OpenFlag(rawValue: O_CREAT)

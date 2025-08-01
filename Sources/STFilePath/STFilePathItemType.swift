@@ -9,7 +9,7 @@ import Foundation
 
 /// [en] The type of a file system item.
 /// [zh] 文件系统项的类型。
-public enum STFilePathItemType: Int, Equatable, Codable {
+public enum STFilePathItemType: Int, Equatable, Codable, Sendable {
     
     /// [en] The item is a file.
     /// [zh] 该项是文件。

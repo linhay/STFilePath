@@ -6,8 +6,8 @@
 //
 
 import Foundation
-import Testing
 import STFilePath
+import Testing
 
 struct CompressionTest {
     

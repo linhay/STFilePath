@@ -24,7 +24,7 @@ import Foundation
 
 /// [en] Represents a folder path and provides folder-specific operations.
 /// [zh] 表示文件夹路径并提供文件夹特定的操作。
-public struct STFolder: STPathProtocol {
+public struct STFolder: STPathProtocol, Sendable {
     
     /// [en] The type of the file system item, which is always `.folder`.
     /// [zh] 文件系统项的类型，始终为 `.folder`。

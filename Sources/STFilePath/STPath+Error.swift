@@ -33,8 +33,7 @@ public struct STPathError: LocalizedError {
     /// - Returns: An error.
     /// - Throws: The error.
     public static func noSuchFile(_ path: String) throws -> Error {
-        throw STPathError(message: "[en] no such file 
- [zh] 没有这样的文件", code: 0)
+        throw STPathError(message: "[en] no such file [zh] 没有这样的文件", code: 0)
     }
     
     /// [en] Creates an error indicating that the operation is not permitted.
@@ -43,8 +42,7 @@ public struct STPathError: LocalizedError {
     /// - Returns: An error.
     /// - Throws: The error.
     public static func operationNotPermitted(_ path: String) throws -> Error {
-        throw STPathError(message: "[en] Operation not permitted 
- [zh] 操作不允许", code: 1)
+        throw STPathError(message: "[en] Operation not permitted [zh] 操作不允许", code: 1)
     }
     
     /// [en] The error message.
@@ -59,9 +57,8 @@ public struct STPathError: LocalizedError {
     /// [zh] 从 POSIX 错误代码初始化一个新的 `STPathError` 实例。
     /// - Parameter posix: The POSIX error code.
     public init(posix: Int32) {
-        guard let code = POSIXErrorCode(rawValue: posix) {
-            self.init(message: "[en] Unknown 
- [zh] 未知", code: -1)
+        guard let code = POSIXErrorCode(rawValue: posix) else {
+            self.init(message: "[en] Unknown [zh] 未知", code: -1)
             return
         }
         self.init(message: POSIXError(code).localizedDescription, code: Int(code.rawValue))

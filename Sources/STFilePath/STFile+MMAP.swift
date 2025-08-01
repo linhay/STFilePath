@@ -43,8 +43,7 @@ extension STFile {
               offset: Int = 0) throws -> STFileMMAP {
         
         guard isExist else {
-            throw STPathError(message: "[en] Cannot open '\(url.absoluteURL)' 
- [zh] 无法打开 '\(url.absoluteURL)'")
+            throw STPathError(message: "[en] Cannot open '\(url.absoluteURL)' [zh] 无法打开 '\(url.absoluteURL)'")
         }
         
         let system = self.system
@@ -55,8 +54,7 @@ extension STFile {
             let size = system.alignmentPageSize(from: size ?? Int(fileSize))
             
             guard size > 0 else {
-                throw STPathError(message: "[en] size must be greater than 0 
- [zh] 大小必须大于 0")
+                throw STPathError(message: "[en] size must be greater than 0 [zh] 大小必须大于 0")
             }
             
             try system.truncate(descriptor: descriptor, size: size)
@@ -218,7 +216,7 @@ public extension STFileMMAP {
         // [en] Check if the data to be written exceeds the mapped region size.
         // [zh] 检查要写入的数据是否超出映射区域大小。
         if data.count + offset > size {
-            throw STPathError(message: "[en] The data to be written exceeds the mapped region size. Mapped region size: \(size) \n [zh] 写入数据超出映射区大小, 映射区size: \(size)")
+            throw STPathError(message: "[en] The data to be written exceeds the mapped region size. Mapped region size: \(size) [zh] 写入数据超出映射区大小, 映射区size: \(size)")
         }
 
         // [en] Get the starting position for writing data.

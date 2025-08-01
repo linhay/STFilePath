@@ -24,7 +24,7 @@ import Foundation
 
 /// [en] A struct that represents the permissions of a path.
 /// [zh] 一个表示路径权限的结构体。
-public struct STPathPermission: OptionSet, Comparable {
+public struct STPathPermission: OptionSet, Comparable, Sendable {
     
     public static func < (lhs: STPathPermission, rhs: STPathPermission) -> Bool {
         lhs.rawValue < rhs.rawValue

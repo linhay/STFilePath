@@ -24,11 +24,11 @@ import Foundation
 
 /// [en] Represents a file path and provides file-specific operations.
 /// [zh] 表示文件路径并提供文件特定的操作。
-public struct STFile: STPathProtocol, Codable {
+public struct STFile: STPathProtocol, Codable, Sendable {
     
     /// [en] The type of the file system item, which is always `.file`.
     /// [zh] 文件系统项的类型，始终为 `.file`。
-    public var type: STFilePathItemType = .file
+    public let type: STFilePathItemType = .file
     /// [en] The URL of the file.
     /// [zh] 文件的 URL。
     public let url: URL

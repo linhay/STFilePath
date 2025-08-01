@@ -24,7 +24,7 @@ public enum STFilePathReferenceType: Identifiable, STPathProtocol {
     /// - Throws: An error if the path does not exist.
     public init(_ url: URL) throws {
         guard let item = STPath(url).referenceType else {
-            throw STPathError(message: "[en] No real file path exists \n [zh] 不存在真实文件路径")
+            throw STPathError(message: "[en] No real file path exists [zh] 不存在真实文件路径")
         }
         self = item
     }
