@@ -8,16 +8,17 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        swift: ["6.1.0"]
     steps:
-    - uses: actions/checkout@v3
-
-    - name: Setup Swift 6.0 Toolchain
-      uses: swift-actions/setup-swift@v1
+    - uses: swift-actions/setup-swift@v2
       with:
-        swift-version: "6.0"
-
-    - name: Check Swift Version
+        swift-version: ${{ matrix.swift }}
+    - name: Get swift version
       run: swift --version
 
     - name: Build
