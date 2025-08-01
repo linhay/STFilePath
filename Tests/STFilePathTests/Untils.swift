@@ -9,5 +9,5 @@ import STFilePath
 import Foundation
 
 func createTestFolder() throws -> STFolder {
-   try STFolder(sanbox: .temporary).folder("testings/\(UUID().uuidString)")
+    try STFolder(sanbox: .temporary).folder("testings/\(UUID().uuidString)")
 }

@@ -8,6 +8,7 @@ struct STFileTests {
     @Test("File Operations")
     func testFileOperations() throws {
         let testFolder = try createTestFolder()
+        defer { try? testFolder.delete() }
         try testFolder.create()
         let file = testFolder.file("test.txt")
         try file.create(with: "hello".data(using: .utf8))
@@ -22,19 +23,12 @@ struct STFileTests {
         try newFile.move(to: movedFile)
         #expect(!newFile.isExist)
         #expect(movedFile.isExist)
-        
-        try movedFile.append(data: " world".data(using: .utf8))
-        #expect(try movedFile.read() == "hello world")
-        
-        try movedFile.overlay(with: "overlay".data(using: .utf8))
-        #expect(try movedFile.read() == "overlay")
-        
-        try testFolder.delete()
     }
     
     @Test("Data Operations")
     func testDataOperations() throws {
         let testFolder = try createTestFolder()
+        defer { try? testFolder.delete() }
         try testFolder.create()
         let file = testFolder.file("data.txt")
         let data = "hello world".data(using: .utf8)!
@@ -48,13 +42,12 @@ struct STFileTests {
         
         let decodedString = try file.decode { String(data: $0, encoding: .utf8) }
         #expect(decodedString == "hello world")
-        
-        try testFolder.delete()
     }
     
     @Test("Line Reading")
     func testLineReading() async throws {
         let testFolder = try createTestFolder()
+        defer { try? testFolder.delete() }
         try testFolder.create()
         let file = testFolder.file("lines.txt")
         try file.create(with: "line1\nline2\nline3".data(using: .utf8))
@@ -65,8 +58,54 @@ struct STFileTests {
         }
         
         #expect(lines == ["line1", "line2", "line3"])
-        
-        try testFolder.delete()
     }
     
+    @Test("Overlay Operation")
+    func testOverlay() throws {
+        let testFolder = try createTestFolder()
+        defer { try? testFolder.delete() }
+        try testFolder.create()
+        let file = testFolder.file("overlay_test.txt")
+
+        // 1. Test overlay on a non-existent file
+        try file.overlay(with: "first version".data(using: .utf8))
+        #expect(file.isExist)
+        #expect(try file.read() == "first version")
+
+        // 2. Test overlay on an existing file
+        try file.overlay(with: "second version".data(using: .utf8))
+        #expect(try file.read() == "second version")
+
+        // 3. Test overlay with nil data (should create an empty file)
+        let emptyFile = testFolder.file("empty_overlay.txt")
+        try emptyFile.overlay(with: nil)
+        #expect(emptyFile.isExist)
+        #expect(try emptyFile.read() == "")
+    }
+
+    @Test("Append Operation")
+    func testAppend() throws {
+        let testFolder = try createTestFolder()
+        defer { try? testFolder.delete() }
+        try testFolder.create()
+        let file = testFolder.file("append_test.txt")
+
+        // 1. Test append on a non-existent file
+        try file.append(data: "first chunk".data(using: .utf8))
+        #expect(file.isExist)
+        #expect(try file.read() == "first chunk")
+
+        // 2. Test append on an existing file
+        try file.append(data: " second chunk".data(using: .utf8))
+        #expect(try file.read() == "first chunk second chunk")
+        
+        // 3. Test appending nil data (should do nothing)
+        let originalContent = try file.read()
+        try file.append(data: nil)
+        #expect(try file.read() == originalContent)
+    }
 }
+
+    
+
+    

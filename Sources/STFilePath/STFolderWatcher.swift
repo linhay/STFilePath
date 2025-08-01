@@ -90,6 +90,7 @@ public class STFolderWatcher {
     }
     
     deinit {
+        timer?.cancel()
         continuation?.finish()
     }
     

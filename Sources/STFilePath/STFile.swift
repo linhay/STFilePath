@@ -212,6 +212,7 @@ public extension STFile {
         }
         
         let handle = try handle(.writing)
+        defer { try? handle.close() }
         try handle.seekToEnd()
         try handle.write(contentsOf: data)
     }
@@ -258,9 +259,11 @@ public extension STFile {
     func readLines(progress: ((_ row: Int) -> Void)? = nil,
                    splitBy: [String] = ["\n", "\r"],
                    _ call: (_ line: String) async throws -> Void) async throws {
+        let handle = try self.handle(.reading)
+        defer { try? handle.close() }
         var data = Data()
         var row = 0
-        try await readStream(handle: self.handle(.reading)) { slice in
+        try await readStream(handle: handle) { slice in
             if let char = String(data: slice.data, encoding: .utf8),
                splitBy.contains(char),
                let string = String(data: data, encoding: .utf8) {
