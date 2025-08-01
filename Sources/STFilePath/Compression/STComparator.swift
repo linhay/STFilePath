@@ -1,3 +1,4 @@
+#if canImport(Compression)
 import Foundation
 import Compression
 
@@ -109,3 +110,4 @@ private extension STComparator {
     }
     
 }
+#endif
