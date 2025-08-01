@@ -237,7 +237,7 @@ public extension STPathProtocol {
     static func standardizedPath(_ path: String) -> URL {
         if path == "~" {
 #if os(Linux)
-            return URL(fileURLWithPath: "/")
+            return URL(fileURLWithPath: NSHomeDirectory())
 #else
             return STFolder.Sanbox.home.url
 #endif
@@ -245,7 +245,7 @@ public extension STPathProtocol {
             var components = path.split(separator: "/").map({ $0.description })
             components = Array(components.dropFirst())
 #if os(Linux)
-            let home = [String]()
+            let home = NSHomeDirectory().split(separator: "/").map(\.description)
 #else
             let home = STFolder.Sanbox.home.url.path.split(separator: "/").map(\.description)
 #endif
