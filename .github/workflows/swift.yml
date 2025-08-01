@@ -15,6 +15,7 @@ jobs:
         os: [macos-latest]
         swift: ["6.0"]
     steps:
+    - uses: actions/checkout@v4
     - uses: swift-actions/setup-swift@v2
       with:
         swift-version: ${{ matrix.swift }}
