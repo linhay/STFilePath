@@ -14,9 +14,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Select swift version
-      uses: fwal/setup-swift@v1
+      uses: swift-actions/setup-swift@v1
       with:
-        swift-version: 6.0.0
+        swift-version: "6.0"
     - name: Build
       run: swift build
     - name: Run tests
