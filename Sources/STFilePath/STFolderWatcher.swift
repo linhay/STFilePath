@@ -147,29 +147,29 @@ public class STFolderWatcher {
         _stream = nil
     }
     
-    // Private Method to Check Folder Changes
     private func checkFolderChanges() {
         do {
-            let files = try folder.allSubFilePaths().compactMap(\.asFile)
-            
-            for file in files {
-                if let modificationDate = previousContents[file] {
-                    if file.attributes.modificationDate != modificationDate {
-                        let change = Changed(kind: .changed, file: file)
-                        continuation?.yield(change)
+            let currentFiles = try folder.allSubFilePaths().compactMap(\.asFile)
+            let currentFilesSet = Set(currentFiles)
+            let previousFilesSet = Set(previousContents.keys)
+
+            // Check for deletions
+            for file in previousFilesSet.subtracting(currentFilesSet) {
+                continuation?.yield(Changed(kind: .deleted, file: file))
+                previousContents.removeValue(forKey: file)
+            }
+
+            // Check for additions and modifications
+            for file in currentFiles {
+                if let oldModificationDate = previousContents[file] {
+                    if file.attributes.modificationDate != oldModificationDate {
+                        continuation?.yield(Changed(kind: .changed, file: file))
                         previousContents[file] = file.attributes.modificationDate
                     }
                 } else {
-                    let change = Changed(kind: .added, file: file)
-                    continuation?.yield(change)
+                    continuation?.yield(Changed(kind: .added, file: file))
                     previousContents[file] = file.attributes.modificationDate
                 }
-            }
-            
-            Set(previousContents.keys).subtracting(files).forEach { file in
-                let change = Changed(kind: .deleted, file: file)
-                continuation?.yield(change)
-                previousContents[file] = nil
             }
         } catch {
             continuation?.finish(throwing: error)

@@ -36,8 +36,8 @@ struct STFolderTests {
         let testFolder = try createTestFolder()
         try testFolder.create()
         let subfolder = try testFolder.create(folder: "subfolder")
-        let file1 = try testFolder.create(file: "file1.txt")
-        let file2 = try subfolder.create(file: "file2.txt")
+        try testFolder.create(file: "file1.txt")
+        try subfolder.create(file: "file2.txt")
         try testFolder.create(file: ".hidden.txt")
         
         let allPaths = try testFolder.allSubFilePaths()
