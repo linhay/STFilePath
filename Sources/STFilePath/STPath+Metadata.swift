@@ -6,11 +6,6 @@
 //
 
 import Foundation
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#endif
 
 public extension STPathProtocol {
 
@@ -60,16 +55,12 @@ struct STExtendedAttributes {
     ///   - forName: The name of the attribute.
     /// - Throws: An error if the attribute cannot be set.
     func set(name: String, value: Data) throws {
-        #if canImport(Darwin)
         try url.path.withCString { fileSystemPath in
             let status = setxattr(fileSystemPath, name, value.withUnsafeBytes { $0.baseAddress! }, value.count, 0, 0)
             if status == -1 {
                 throw STPathError(message: "[en] Failed to set extended attribute \(name). \n [zh] 设置扩展属性 \(name) 失败。", code: Int(errno))
             }
         }
-        #else
-        throw STPathError(message: "[en] Extended attributes are not supported on this platform. \n [zh] 此平台不支持扩展属性。", code: -1)
-        #endif
     }
 
     /// [en] Returns the value of an extended attribute.
@@ -78,7 +69,6 @@ struct STExtendedAttributes {
     /// - Returns: The value of the attribute.
     /// - Throws: An error if the attribute cannot be retrieved.
     func value(of name: String) throws -> Data {
-        #if canImport(Darwin)
         try url.path.withCString { fileSystemPath in
             let length = getxattr(fileSystemPath, name, nil, 0, 0, 0)
             if length == -1 {
@@ -93,9 +83,6 @@ struct STExtendedAttributes {
             }
             return data
         }
-        #else
-        throw STPathError(message: "[en] Extended attributes are not supported on this platform. \n [zh] 此平台不支持扩展属性。", code: -1)
-        #endif
     }
 
     /// [en] Removes an extended attribute from the file or folder.
@@ -103,16 +90,12 @@ struct STExtendedAttributes {
     /// - Parameter forName: The name of the attribute to remove.
     /// - Throws: An error if the attribute cannot be removed.
     func remove(of name: String) throws {
-        #if canImport(Darwin)
         try url.path.withCString { fileSystemPath in
             let status = removexattr(fileSystemPath, name, 0)
             if status == -1 {
                 throw STPathError(message: "[en] Failed to remove extended attribute \(name). \n [zh] 删除扩展属性 \(name) 失败。", code: Int(errno))
             }
         }
-        #else
-        throw STPathError(message: "[en] Extended attributes are not supported on this platform. \n [zh] 此平台不支持扩展属性。", code: -1)
-        #endif
     }
 
     /// [en] Returns a list of all extended attributes.
@@ -120,7 +103,6 @@ struct STExtendedAttributes {
     /// - Returns: A list of attribute names.
     /// - Throws: An error if the attributes cannot be retrieved.
     func list() throws -> [String] {
-        #if canImport(Darwin)
         try url.path.withCString { fileSystemPath in
             let length = listxattr(fileSystemPath, nil, 0, 0)
             if length == -1 {
@@ -133,8 +115,5 @@ struct STExtendedAttributes {
             }
             return buffer.split(separator: 0).compactMap { String(cString: Array($0), encoding: .utf8) }
         }
-        #else
-        throw STPathError(message: "[en] Extended attributes are not supported on this platform. \n [zh] 此平台不支持扩展属性。", code: -1)
-        #endif
     }
 }
