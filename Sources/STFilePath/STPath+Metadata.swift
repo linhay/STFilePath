@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#endif
 
 public extension STPathProtocol {
 
@@ -48,6 +51,7 @@ struct STExtendedAttributes {
     
     let url: URL
     
+    #if canImport(Darwin)
     /// [en] Sets an extended attribute for the file or folder.
     /// [zh] 为文件或文件夹设置扩展属性。
     /// - Parameters:
@@ -116,4 +120,29 @@ struct STExtendedAttributes {
             return buffer.split(separator: 0).compactMap { String(cString: Array($0), encoding: .utf8) }
         }
     }
+    #else
+    /// [en] Extended attributes are not supported on this platform.
+    /// [zh] 此平台不支持扩展属性。
+    func set(name: String, value: Data) throws {
+        throw STPathError(message: "[en] Extended attributes not supported on this platform. \n [zh] 此平台不支持扩展属性。", code: -1)
+    }
+    
+    /// [en] Extended attributes are not supported on this platform.
+    /// [zh] 此平台不支持扩展属性。
+    func value(of name: String) throws -> Data {
+        throw STPathError(message: "[en] Extended attributes not supported on this platform. \n [zh] 此平台不支持扩展属性。", code: -1)
+    }
+    
+    /// [en] Extended attributes are not supported on this platform.
+    /// [zh] 此平台不支持扩展属性。
+    func remove(of name: String) throws {
+        throw STPathError(message: "[en] Extended attributes not supported on this platform. \n [zh] 此平台不支持扩展属性。", code: -1)
+    }
+    
+    /// [en] Extended attributes are not supported on this platform.
+    /// [zh] 此平台不支持扩展属性。
+    func list() throws -> [String] {
+        throw STPathError(message: "[en] Extended attributes not supported on this platform. \n [zh] 此平台不支持扩展属性。", code: -1)
+    }
+    #endif
 }
