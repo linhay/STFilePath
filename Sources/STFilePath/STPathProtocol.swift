@@ -48,7 +48,7 @@ public extension STPathProtocol {
     
     /// [en] Checks if the path points to an existing folder.
     /// [zh] 检查路径是否指向一个存在的文件夹。
-    var isExistFolder: Bool {
+    var isFolderExists: Bool {
         do {
             return try Self.isFolder(url)
         } catch {
@@ -56,15 +56,21 @@ public extension STPathProtocol {
         }
     }
     
+    @available(*, deprecated, renamed: "isFolderExists")
+    var isExistFolder: Bool { isFolderExists }
+    
     /// [en] Checks if the path points to an existing file.
     /// [zh] 检查路径是否指向一个存在的文件。
-    var isExistFile: Bool {
+    var isFileExists: Bool {
         do {
             return try Self.isFile(url)
         } catch {
             return false
         }
     }
+
+    @available(*, deprecated, renamed: "isFileExists")
+    var isExistFile: Bool { isFileExists }
 
     /// [en] Checks if the given URL points to a file.
     /// [zh] 检查给定的 URL 是否指向一个文件。
@@ -298,8 +304,10 @@ public extension STPathProtocol {
     
     /// [en] Checks if the path exists.
     /// [zh] 检查路径是否存在。
-    var isExist: Bool { manager.fileExists(atPath: url.path) }
-    
+    @available(*, deprecated, renamed: "isExists")
+    var isExist: Bool { isExists }
+    var isExists: Bool { manager.fileExists(atPath: url.path) }
+
     /// [en] Renames the file or folder.
     /// [zh] 重命名文件或文件夹。
     /// - Parameter name: The new name for the item.
