@@ -57,3 +57,59 @@ public extension DFAnyFile {
     }
     
 }
+
+public final class DFCurrentValueFile<File: DownloadableFile & Sendable>: @unchecked Sendable, DownloadableFile {
+    public typealias Model = File.Model
+    
+    public let file: File
+    public var value: File.Model? {
+        set {
+            _value = newValue
+            save(newValue)
+        }
+        get { _value }
+    }
+    private var _value: File.Model?
+    private var task: Task<(), any Error>?
+    
+    public init(file: File, initialValue value: File.Model? = nil) {
+        self.file = file
+        self._value = value
+    }
+
+    public func fetch() async throws -> Model {
+        let value = try await file.fetch()
+        self._value = value
+        return value
+    }
+    
+    public func save(_ model: Model?) async throws {
+        try Task.checkCancellation()
+        self._value = model
+        try await file.save(model)
+    }
+
+    private func save(_ model: Model?) {
+        task?.cancel()
+        task = Task {
+            do {
+                try await save(model)
+            } catch let error as CancellationError {
+                debugPrint("Failed to save file: \(error)")
+            } catch {
+                debugPrint("Failed to save file: \(error)")
+            }
+        }
+    }
+    
+}
+
+
+public extension STFile {
+    
+    func toDFAnyFile() -> DFAnyFile<Data> {
+        .init(file: self)
+    }
+    
+}
+

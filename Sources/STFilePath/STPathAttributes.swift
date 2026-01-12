@@ -40,19 +40,33 @@ public struct STPathNameComponents {
     public var isHidden: Bool { name.hasPrefix(".") }
     
     public init(_ name: String) {
-        let lastPathComponent = name.split(separator: "/", omittingEmptySubsequences: true).last ?? ""
-        let components = lastPathComponent.split(separator: ".", omittingEmptySubsequences: false)
-
-        // [en] If it is a hidden file and has only one dot, then the entire lastPathComponent is the file name.
-        // [zh] 如果是隐藏文件且只有一个点，那么整个 lastPathComponent 是文件名。
-        if components.count == 1 {
-            self.name = String(lastPathComponent)
+        let path = name
+        let pathComponents = path.split(separator: "/", omittingEmptySubsequences: true)
+        let lastPathComponent = pathComponents.last.map(String.init) ?? ""
+        if lastPathComponent.isEmpty {
+            self.name = ""
             self.extension = nil
+        } else if lastPathComponent.hasPrefix(".") {
+            // Hidden file, check for multiple dots
+            let dotComponents = lastPathComponent.dropFirst().split(separator: ".", omittingEmptySubsequences: false)
+            if dotComponents.count <= 1 {
+                self.name = lastPathComponent
+                self.extension = nil
+            } else {
+                let ext = dotComponents.last.map(String.init)
+                let namePart = "." + dotComponents.dropLast().joined(separator: ".")
+                self.name = namePart
+                self.extension = ext
+            }
         } else {
-            // [en] Otherwise, the part after the first dot is the file name, and the second part is the extension.
-            // [zh] 否则，除去第一个点的剩余部分是文件名，第二部分是扩展名。
-            self.name = (lastPathComponent.hasPrefix(".") ? "." : "") + components.dropLast().joined(separator: ".")
-            self.extension = components.last?.description
+            let dotComponents = lastPathComponent.split(separator: ".", omittingEmptySubsequences: false)
+            if dotComponents.count == 1 {
+                self.name = lastPathComponent
+                self.extension = nil
+            } else {
+                self.name = dotComponents.dropLast().joined(separator: ".")
+                self.extension = dotComponents.last.map(String.init)
+            }
         }
     }
 }

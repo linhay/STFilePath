@@ -37,7 +37,7 @@ public protocol DownloadableFile: Sendable {
     /// - Parameter model: The model to save.
     /// - Throws: An error if the save operation fails.
     func save(_ model: Model?) async throws
-
+    
 }
 
 public extension DownloadableFile {
@@ -88,6 +88,10 @@ public extension DownloadableFile {
         }
     }
     
+    func currentValueFile(_ value: Model?) -> DFCurrentValueFile<Self> {
+        .init(file: self, initialValue: value)
+    }
+    
     /// [en] Maps the file data to a `Codable` type with default encoder and decoder settings.
     /// [zh] 使用默认的编码器和解码器设置将文件数据映射到 `Codable` 类型。
     /// - Parameters:
@@ -112,7 +116,7 @@ public extension DownloadableFile {
     /// [zh] 将文件的特定类型擦除为 `DFAnyFile`。
     /// - Returns: A `DFAnyFile` instance.
     /// - Throws: An error if the operation fails.
-    func eraseToAnyFile() async throws -> DFAnyFile<Model> {
+    func eraseToAnyFile() -> DFAnyFile<Model> {
         .init {
             try await self.fetch()
         } save: { model in
