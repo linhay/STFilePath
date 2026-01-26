@@ -11,7 +11,7 @@
 //
 // The above copyright notice and this permission notice shall be included in all
 // copies or substantial portions of the Software.
-
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,8 +22,16 @@
 
 import Foundation
 
+/// [en] Information about a process.
+/// [zh] 进程信息。
+public struct STProcessInfo: Sendable, Hashable {
+    public let pid: Int32
+    public let name: String
+    public let command: String
+}
+
 /// [en] A protocol that defines the basic properties and methods required for a file path.
-/// [zh] 文件路径协议，定义文件路径所需的基本属性和方法。
+/// [zh] 文件路径协议，定义文件路径所需的基本属性 and 方法。
 public protocol STPathProtocol: Identifiable, Hashable {
 
     /// [en] The type of the file system item.
@@ -138,7 +146,7 @@ extension STPathProtocol {
     public var asFile: STFile? {
         if let type = self as? STFile {
             return type
-        } else if let path = self as? STPath, path.isExistFile {
+        } else if let path = self as? STPath, path.isFileExists {
             return .init(url)
         } else if type == .file {
             return .init(url)
@@ -152,7 +160,7 @@ extension STPathProtocol {
     public var asFolder: STFolder? {
         if let type = self as? STFolder {
             return type
-        } else if let path = self as? STPath, path.isExistFolder {
+        } else if let path = self as? STPath, path.isFolderExists {
             return .init(url)
         } else if type == .folder {
             return .init(url)
@@ -329,7 +337,7 @@ extension STPathProtocol {
     /// [zh] 删除文件或文件夹。
     /// - Throws: An error if the deletion fails.
     public func delete() throws {
-        guard isExist else { return }
+        guard isExists else { return }
         try manager.removeItem(at: url)
     }
 
@@ -342,11 +350,11 @@ extension STPathProtocol {
     /// - Throws: An error if the move operation fails.
     @discardableResult
     public func move<Item: STPathProtocol>(to path: Item, isOverlay: Bool = false) throws -> Item {
-        if isOverlay, path.isExist {
+        if isOverlay, path.isExists {
             try path.delete()
         }
-        if path.parentFolder()?.isExist == false {
-            try path.parentFolder()?.create()
+        if let parent = path.parentFolder(), !parent.isExists {
+            try parent.create()
         }
         try manager.moveItem(at: url, to: path.url)
         return path
@@ -361,11 +369,11 @@ extension STPathProtocol {
     /// - Throws: An error if the copy operation fails.
     @discardableResult
     public func copy<Item: STPathProtocol>(to path: Item, isOverlay: Bool = false) throws -> Item {
-        if isOverlay, path.isExist {
+        if isOverlay, path.isExists {
             try path.delete()
         }
-        if path.parentFolder()?.isExist == false {
-            try path.parentFolder()?.create()
+        if let parent = path.parentFolder(), !parent.isExists {
+            try parent.create()
         }
         try manager.copyItem(at: url, to: path.url)
         return path
@@ -409,5 +417,57 @@ extension STPathProtocol {
         }
         return .init(parent)
     }
+
+    /// [en] Creates a watcher for the path.
+    /// [zh] 为路径创建一个观察者。
+    public func watcher() -> STPathWatcher {
+        return STPathWatcher(path: eraseToAnyPath)
+    }
+
+    #if os(macOS)
+        /// [en] Returns the processes that have the current path open.
+        /// [zh] 返回打开当前路径的进程。
+        public func openingProcesses() -> [STProcessInfo] {
+            let task = Process()
+            task.launchPath = "/usr/sbin/lsof"
+            task.arguments = ["-Fpcn", url.path]
+
+            let pipe = Pipe()
+            task.standardOutput = pipe
+            task.standardError = Pipe()
+
+            do {
+                try task.run()
+                task.waitUntilExit()
+
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                guard let output = String(data: data, encoding: .utf8) else { return [] }
+
+                var processes = [STProcessInfo]()
+                let lines = output.components(separatedBy: "\n")
+
+                var currentPID: Int32?
+                var currentCommand: String?
+
+                for line in lines {
+                    if line.hasPrefix("p") {
+                        currentPID = Int32(line.dropFirst())
+                    } else if line.hasPrefix("c") {
+                        currentCommand = String(line.dropFirst())
+                    } else if line.hasPrefix("n") {
+                        if let pid = currentPID, let command = currentCommand {
+                            processes.append(
+                                STProcessInfo(pid: pid, name: command, command: command))
+                        }
+                        currentPID = nil
+                        currentCommand = nil
+                    }
+                }
+                return Array(Set(processes))
+            } catch {
+                return []
+            }
+        }
+    #endif
 
 }

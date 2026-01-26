@@ -21,85 +21,106 @@
 // SOFTWARE.
 
 #if !os(Linux)
-import Foundation
+    import Foundation
 
-public extension STFolder {
-        
-    /// [en] A struct that represents a sandbox directory.
-    /// [zh] 一个表示沙盒目录的结构体。
-    struct Sanbox {
-        
-        let url: URL
-        
-        /// [en] The root directory of the sandbox.
-        /// [zh] 沙盒的根目录。
-        public static var root: Sanbox { .init(url: URL(fileURLWithPath: NSOpenStepRootDirectory())) }
-        /// [en] The home directory of the sandbox.
-        /// [zh] 沙盒的主目录。
-        public static var home: Sanbox { .init(url: URL(fileURLWithPath: NSHomeDirectory())) }
-        /// [en] The temporary directory of the sandbox.
-        /// [zh] 沙盒的临时目录。
-        public static var temporary: Sanbox { .init(url: URL(fileURLWithPath: NSTemporaryDirectory())) }
-        
-        /// [en] The documents directory of the sandbox.
-        /// [zh] 沙盒的文档目录。
-        public static var document: Sanbox {
-            get throws {
-                .init(url: try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false))
+    extension STFolder {
+
+        /// [en] A struct that represents a sandbox directory.
+        /// [zh] 一个表示沙盒目录的结构体。
+        public struct Sanbox {
+
+            public let url: URL
+
+            /// [en] The root directory of the sandbox.
+            /// [zh] 沙盒的根目录。
+            public static var root: Sanbox {
+                .init(url: URL(fileURLWithPath: NSOpenStepRootDirectory()))
+            }
+            /// [en] The home directory of the sandbox.
+            /// [zh] 沙盒的主目录。
+            public static var home: Sanbox { .init(url: URL(fileURLWithPath: NSHomeDirectory())) }
+            /// [en] The temporary directory of the sandbox.
+            /// [zh] 沙盒的临时目录。
+            public static var temporary: Sanbox {
+                .init(url: URL(fileURLWithPath: NSTemporaryDirectory()))
+            }
+
+            /// [en] The documents directory of the sandbox.
+            /// [zh] 沙盒的文档目录。
+            public static var document: Sanbox {
+                get throws {
+                    .init(
+                        url: try FileManager.default.url(
+                            for: .documentDirectory, in: .userDomainMask, appropriateFor: nil,
+                            create: false))
+                }
+            }
+            /// [en] The library directory of the sandbox.
+            /// [zh] 沙盒的库目录。
+            public static var library: Sanbox {
+                get throws {
+                    .init(
+                        url: try FileManager.default.url(
+                            for: .libraryDirectory, in: .userDomainMask, appropriateFor: nil,
+                            create: false))
+                }
+            }
+            /// [en] The caches directory of the sandbox.
+            /// [zh] 沙盒的缓存目录。
+            public static var cache: Sanbox {
+                get throws {
+                    .init(
+                        url: try FileManager.default.url(
+                            for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil,
+                            create: false))
+                }
             }
         }
-        /// [en] The library directory of the sandbox.
-        /// [zh] 沙盒的库目录。
-        public static var library: Sanbox {
-            get throws {
-                .init(url: try FileManager.default.url(for: .libraryDirectory, in: .userDomainMask, appropriateFor: nil, create: false))
+
+        /// [en] Initializes a new `STFolder` instance from a sandbox directory.
+        /// [zh] 从沙盒目录初始化一个新的 `STFolder` 实例。
+        /// - Parameter rootPath: The sandbox directory.
+        public init(sanbox rootPath: Sanbox) throws {
+            self.init(rootPath.url)
+        }
+
+        /// [en] Initializes a new `STFolder` instance from an application group identifier.
+        /// [zh] 从应用程序组标识符初始化一个新的 `STFolder` 实例。
+        /// - Parameter applicationGroup: The application group identifier.
+        /// - Throws: An error if the application group is not valid.
+        public init(applicationGroup: String) throws {
+            guard
+                let url = FileManager.default.containerURL(
+                    forSecurityApplicationGroupIdentifier: applicationGroup)
+            else {
+                throw STPathError(
+                    message:
+                        "[en] Application group cannot be identified [zh] applicationGroup 无法识别")
             }
+            self.init(url)
         }
-        /// [en] The caches directory of the sandbox.
-        /// [zh] 沙盒的缓存目录。
-        public static var cache: Sanbox {
-            get throws {
-                .init(url: try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: false))
+
+        /// [en] Initializes a new `STFolder` instance from a ubiquity container identifier.
+        /// [zh] 从 ubiquity 容器标识符初始化一个新的 `STFolder` 实例。
+        /// - Parameter ubiquityContainerIdentifier: The ubiquity container identifier.
+        /// - Throws: An error if iCloud is not available.
+        public init(ubiquityContainerIdentifier: String) throws {
+            guard
+                let url = FileManager.default.url(
+                    forUbiquityContainerIdentifier: ubiquityContainerIdentifier)
+            else {
+                throw STPathError(message: "[en] iCloud is not available [zh] iCloud 不可用")
             }
+            self.init(url)
         }
-    }
-    
-    /// [en] Initializes a new `STFolder` instance from a sandbox directory.
-    /// [zh] 从沙盒目录初始化一个新的 `STFolder` 实例。
-    /// - Parameter rootPath: The sandbox directory.
-    init(sanbox rootPath: Sanbox) throws {
-        self.init(rootPath.url)
-    }
-    
-    /// [en] Initializes a new `STFolder` instance from an application group identifier.
-    /// [zh] 从应用程序组标识符初始化一个新的 `STFolder` 实例。
-    /// - Parameter applicationGroup: The application group identifier.
-    /// - Throws: An error if the application group is not valid.
-    init(applicationGroup: String) throws {
-        guard let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: applicationGroup) else {
-            throw STPathError(message: "[en] Application group cannot be identified [zh] applicationGroup 无法识别")
+
+        /// [en] Initializes a new `STFolder` instance from an iCloud container identifier.
+        /// [zh] 从 iCloud 容器标识符初始化一个新的 `STFolder` 实例。
+        /// - Parameter identifier: The iCloud container identifier.
+        /// - Throws: An error if iCloud is not available.
+        public init(iCloud identifier: String) throws {
+            try self.init(ubiquityContainerIdentifier: identifier)
         }
-        self.init(url)
+
     }
-    
-    /// [en] Initializes a new `STFolder` instance from a ubiquity container identifier.
-    /// [zh] 从 ubiquity 容器标识符初始化一个新的 `STFolder` 实例。
-    /// - Parameter ubiquityContainerIdentifier: The ubiquity container identifier.
-    /// - Throws: An error if iCloud is not available.
-    init(ubiquityContainerIdentifier: String) throws {
-        guard let url = FileManager.default.url(forUbiquityContainerIdentifier: ubiquityContainerIdentifier) else {
-            throw STPathError(message: "[en] iCloud is not available [zh] iCloud 不可用")
-        }
-        self.init(url)
-    }
-    
-    /// [en] Initializes a new `STFolder` instance from an iCloud container identifier.
-    /// [zh] 从 iCloud 容器标识符初始化一个新的 `STFolder` 实例。
-    /// - Parameter identifier: The iCloud container identifier.
-    /// - Throws: An error if iCloud is not available.
-    init(iCloud identifier: String) throws {
-        try self.init(ubiquityContainerIdentifier: identifier)
-    }
-    
-}
 #endif

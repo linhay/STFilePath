@@ -6,174 +6,130 @@
 //
 
 import Foundation
+
 #if canImport(Darwin)
-import Darwin
-import Dispatch
+    import Darwin
+    import Dispatch
 #elseif canImport(Glibc)
-import Glibc
-import Dispatch
+    import Glibc
+    import Dispatch
 #endif
 
-public extension STFolder {
-   
+extension STFolder {
+
     /// [en] Creates a watcher for the folder with the specified options.
     /// [zh] 使用指定的选项为文件夹创建一个观察者。
     /// - Parameter options: The options for the watcher.
     /// - Returns: A new `STFolderWatcher` instance.
-    func watcher(options: STFolderWatcher.Options) -> STFolderWatcher {
+    public func watcher(options: STFolderWatcher.Options) -> STFolderWatcher {
         .init(folder: self, options: options)
     }
-    
+
 }
 
 /// [en] A class that monitors a folder for changes.
 /// [zh] 一个监视文件夹变化的类。
-public class STFolderWatcher {
-    
+public class STFolderWatcher: @unchecked Sendable {
+
     /// [en] The kind of change that occurred in the folder.
     /// [zh] 文件夹中发生的变化类型。
     public enum ChangeKind {
-        /// [en] A new file was added.
-        /// [zh] 添加了一个新文件。
         case added
-        /// [en] A file was deleted.
-        /// [zh] 删除了一个文件。
         case deleted
-        /// [en] A file was changed.
-        /// [zh] 一个文件被更改了。
         case changed
+
+        init(_ kind: STPathChangeKind) {
+            switch kind {
+            case .created: self = .added
+            case .deleted: self = .deleted
+            case .modified, .renamed: self = .changed
+            }
+        }
     }
-    
+
     /// [en] A struct that represents a change in the folder.
     /// [zh] 一个表示文件夹变化的结构体。
     public struct Changed {
-        /// [en] The kind of change.
-        /// [zh] 变化的类型。
         public let kind: ChangeKind
-        /// [en] The file that was changed.
-        /// [zh] 被更改的文件。
         public let file: STFile
     }
-    
+
     /// [en] The options for the folder watcher.
     /// [zh] 文件夹观察者的选项。
     public struct Options {
-        /// [en] The interval at which to check for changes.
-        /// [zh] 检查变化的时间间隔。
         public var interval: DispatchTimeInterval
-        public init(interval: DispatchTimeInterval) {
+        public init(interval: DispatchTimeInterval = .milliseconds(200)) {
             self.interval = interval
         }
     }
-    
+
     // Properties
-    /// [en] The folder being watched.
-    /// [zh] 被监视的文件夹。
     public let folder: STFolder
-    /// [en] The options for the watcher.
-    /// [zh] 观察者的选项。
     public let options: Options
-    private var timer: DispatchSourceTimer?
-    private var previousContents = [STFile: Date]()
+    private let backend: WatcherBackend
     private var continuation: AsyncThrowingStream<Changed, Error>.Continuation?
     private var _stream: AsyncThrowingStream<Changed, Error>?
 
     // Initialization
-    /// [en] Initializes a new `STFolderWatcher` instance.
-    /// [zh] 初始化一个新的 `STFolderWatcher` 实例。
-    /// - Parameters:
-    ///   - folder: The folder to watch.
-    ///   - options: The options for the watcher.
-    public init(folder: STFolder, options: Options) {
+    public init(folder: STFolder, options: Options = .init()) {
         self.folder = folder
         self.options = options
+        #if os(macOS)
+            self.backend = FSEventsWatcher(paths: [folder.path])
+        #else
+            self.backend = DispatchSourceWatcher(url: folder.url)
+        #endif
     }
-    
+
     deinit {
-        timer?.cancel()
-        continuation?.finish()
+        stopMonitoring()
     }
-    
-    /// [en] Connects the watcher to the folder and captures the initial state.
-    /// [zh] 将观察者连接到文件夹并捕获初始状态。
-    /// - Returns: The `STFolderWatcher` instance.
-    /// - Throws: An error if the initial state cannot be captured.
+
+    @available(*, deprecated, message: "Use streamMonitoring() instead")
     @discardableResult
     public func connect() throws -> Self {
-        let files = try folder.allSubFilePaths().compactMap(\.asFile)
-        for file in files {
-            previousContents[file] = file.attributes.modificationDate
-        }
         return self
     }
-    
-    // Stream
+
     /// [en] Starts monitoring the folder and returns an asynchronous stream of changes.
     /// [zh] 开始监视文件夹并返回一个异步的变化流。
-    /// - Returns: An `AsyncThrowingStream` of `Changed` events.
-    /// - Throws: An error if the stream cannot be created.
     public func streamMonitoring() throws -> AsyncThrowingStream<Changed, Error> {
         if let stream = self._stream {
             return stream
         }
+
         let (stream, continuation) = AsyncThrowingStream<Changed, Error>.makeStream()
         self.continuation = continuation
         self._stream = stream
-        monitoring()
+
+        Task { @Sendable [weak self] in
+            guard let self = self else { return }
+            do {
+                for try await change in self.backend.start() {
+                    let folderChange = Changed(
+                        kind: ChangeKind(change.kind), file: STFile(change.path.url))
+                    self.continuation?.yield(folderChange)
+                }
+            } catch {
+                self.continuation?.finish(throwing: error)
+            }
+        }
+
         return stream
     }
-    
-    /// [en] Starts the monitoring timer.
-    /// [zh] 启动监视计时器。
+
+    @available(
+        *, deprecated, message: "Use stream() from WatcherBackend directly or streamMonitoring()"
+    )
     public func monitoring() {
-        guard timer == nil else { return }
-        
-        let timer = DispatchSource.makeTimerSource()
-        timer.schedule(deadline: .now(), repeating: options.interval)
-        timer.setEventHandler { [weak self] in
-            self?.checkFolderChanges()
-        }
-        timer.resume()
-        self.timer = timer
+        _ = try? streamMonitoring()
     }
-    
-    // Stop Monitoring
+
     /// [en] Stops monitoring the folder for changes.
     /// [zh] 停止监视文件夹的变化。
     public func stopMonitoring() {
-        timer?.cancel()
-        timer = nil
+        backend.stop()
         continuation?.finish()
         _stream = nil
     }
-    
-    private func checkFolderChanges() {
-        do {
-            let currentFiles = try folder.allSubFilePaths().compactMap(\.asFile)
-            let currentFilesSet = Set(currentFiles)
-            let previousFilesSet = Set(previousContents.keys)
-
-            // Check for deletions
-            for file in previousFilesSet.subtracting(currentFilesSet) {
-                continuation?.yield(Changed(kind: .deleted, file: file))
-                previousContents.removeValue(forKey: file)
-            }
-
-            // Check for additions and modifications
-            for file in currentFiles {
-                if let oldModificationDate = previousContents[file] {
-                    if file.attributes.modificationDate != oldModificationDate {
-                        continuation?.yield(Changed(kind: .changed, file: file))
-                        previousContents[file] = file.attributes.modificationDate
-                    }
-                } else {
-                    continuation?.yield(Changed(kind: .added, file: file))
-                    previousContents[file] = file.attributes.modificationDate
-                }
-            }
-        } catch {
-            continuation?.finish(throwing: error)
-        }
-    }
-    
 }
