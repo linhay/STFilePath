@@ -1,74 +1,123 @@
-STFilePath Examples (basic → advanced)
+STFilePath Examples (API-accurate snippets)
+
+Use cases
+1) 基础文件 CRUD：见「1) Basic: create/read/append/delete」
+2) 监听变更：见「3) Folder watcher」与「4) Path watcher」
+3) 数据模型落盘：见「5) DownloadableFile + Codable」与「6) JSON lines」
+
+If you need a deep-dive (including gotchas and where to change code), open:
+- IO: `references/FILE_IO.md`
+- Watchers: `references/WATCHERS.md`
+- Hashing: `references/HASHING.md`
+- DownloadableFile: `references/DOWNLOADABLEFILE.md`
+- JSON Lines: `references/JSON_LINES.md`
+- Search/backup: `references/SEARCH_AND_BACKUP.md`
 
 1) Basic: create/read/append/delete
 
 ```swift
+import Foundation
 import STFilePath
 
-let documents = try STFolder.Sanbox.document.url.asSTFolder() // Use Sanbox helper
+let documents = try STFolder(sanbox: .document)
 let folder = try documents.folder("Example").create()
-let file = try folder.file("hello.txt").create(with: "Hello".data(using: .utf8)!)
-let content = try file.read()
-try file.append(data: " world".data(using: .utf8)!)
+let file = try folder.file("hello.txt").create(with: Data("Hello".utf8))
+
+let content = try file.read() // String
+try file.append(data: Data(" world".utf8))
 try file.delete()
 ```
 
-2) Hashing (SHA256)
+2) Hashing (CryptoKit, SHA256)
 
 ```swift
-let file = STFile(url)
-let sha = try file.hash(with: .sha256)
+import STFilePath
+
+let file = STFile("/tmp/demo.txt")
+let sha = try file.hash(with: .sha256) // String hex digest
 print(sha)
 ```
 
-3) Modern Watcher (Async Stream)
+3) Folder watcher (Async stream)
 
 ```swift
-// Watch a folder recursively on macOS
-let watcher = folder.watcher() 
+import STFilePath
+
+let temp = try STFolder(sanbox: .temporary)
+let folder = try temp.folder("WatchDemo").create()
+
+let watcher = folder.watcher(options: .init(interval: .milliseconds(200)))
 let stream = try watcher.streamMonitoring()
 
 Task {
     for try await change in stream {
-        print("Changed: \(change.file.url.lastPathComponent) - \(change.kind)")
-    }
-}
-
-// Watch a single file
-let fileWatcher = file.watcher()
-let fileStream = fileWatcher.stream()
-
-Task {
-    for try await event in fileStream {
-        print("File event: \(event.kind) at \(event.path.url)")
+        print("\(change.kind): \(change.file.url.lastPathComponent)")
     }
 }
 ```
 
-4) Identifying Opening Processes (macOS)
+4) Path watcher (unified; folder uses FSEvents on macOS)
 
 ```swift
-let apps = file.openingProcesses()
-for app in apps {
-    print("Process \(app.name) (PID: \(app.pid)) has this file open.")
+import STFilePath
+
+let path = STPath("/tmp")
+let watcher = STPathWatcher(path: path)
+
+Task {
+    for try await event in watcher.stream() {
+        print("\(event.kind): \(event.path.url.path)")
+    }
 }
 ```
 
 5) DownloadableFile + Codable
 
 ```swift
-struct MyModel: Codable { let name: String; let value: Int }
+import Foundation
+import STFilePath
 
-let df = DFAnyFile(file: STFile(url)).codable(MyModel.self)
+struct MyModel: Codable, Sendable { var name: String; var value: Int }
+
+let file = STFile("/tmp/model.json")
+try file.createIfNotExists(with: Data("{}".utf8))
+
+let df = file.toDFAnyFile().codable(MyModel.self)
 Task {
     let model = try await df.fetch()
-    var newModel = model
-    newModel.value += 1
-    try await df.save(newModel)
+    try await df.save(.init(name: model.name, value: model.value + 1))
 }
 ```
 
-Notes
-- Use `isExists` instead of deprecated `isExist`.
-- Watchers on macOS are powered by `FSEvents` (recursive) or `DispatchSource` (single item).
-- Concurrency: Watcher classes are `Sendable` but may use `@unchecked Sendable` for internal backend management.
+6) JSON lines (append + read)
+
+```swift
+import Foundation
+import STFilePath
+
+struct Row: Codable { let id: Int; let name: String }
+
+let file = STFile("/tmp/rows.jsonl")
+try file.createIfNotExists()
+
+let writer = try file.lineFile.newLineWriter
+try writer.append(model: Row(id: 1, name: "A"))
+try writer.append(model: Row(id: 2, name: "B"))
+
+let rows: [Row] = try file.lineFile.lines(as: Row.self)
+print(rows.count)
+```
+
+7) Extended attributes (Darwin only)
+
+```swift
+import Foundation
+import STFilePath
+
+let file = STFile("/tmp/xattr.txt")
+try file.createIfNotExists(with: Data("hi".utf8))
+
+try file.extendedAttributes.set(name: "com.example.tag", value: Data("demo".utf8))
+let v = try file.extendedAttributes.value(of: "com.example.tag")
+print(String(decoding: v, as: UTF8.self))
+```

@@ -33,7 +33,7 @@ public class STFolderWatcher: @unchecked Sendable {
 
     /// [en] The kind of change that occurred in the folder.
     /// [zh] 文件夹中发生的变化类型。
-    public enum ChangeKind {
+    public enum ChangeKind: Sendable {
         case added
         case deleted
         case changed
@@ -49,14 +49,14 @@ public class STFolderWatcher: @unchecked Sendable {
 
     /// [en] A struct that represents a change in the folder.
     /// [zh] 一个表示文件夹变化的结构体。
-    public struct Changed {
+    public struct Changed: Sendable {
         public let kind: ChangeKind
         public let file: STFile
     }
 
     /// [en] The options for the folder watcher.
     /// [zh] 文件夹观察者的选项。
-    public struct Options {
+    public struct Options: Sendable {
         public var interval: DispatchTimeInterval
         public init(interval: DispatchTimeInterval = .milliseconds(200)) {
             self.interval = interval
