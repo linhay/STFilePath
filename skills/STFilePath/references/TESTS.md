@@ -28,6 +28,15 @@ Existing test coverage (where to look first)
 - Metadata/link: `Tests/STFilePathTests/STPath+MetadataTests.swift`, `Tests/STFilePathTests/STPath+LinkTests.swift`
 - Paths/protocol: `Tests/STFilePathTests/STPathTests.swift`
 
+MMAP test coverage highlights
+- Page-aligned vs non-aligned offset validation.
+- Negative offset and EOF offset checks.
+- Size constraints: zero, size > file size, offset + size > file size.
+- Default size behavior: `fileSize - offset`.
+- Read/write boundaries, read ranges, and type-safe buffer access.
+- MAP_PRIVATE no write-back, MAP_SHARED sync + cross-process visibility (macOS).
+- Read-only mapping against read-only file permissions.
+
 Suggested tests to add (only if a feature lacks coverage)
 1) Permissions + xattrs integration (Darwin-only)
 - Set POSIX permissions via `set(permissions:)` and read back via `permissions()`.

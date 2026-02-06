@@ -116,16 +116,26 @@ public class STFileMMAP {
                      size: Int?,
                      offset: Int) throws {
         
-        guard file.isExist else {
+        guard file.isExists else {
             throw STPathError(message: "[en] Cannot open non-existent file at \'\(file.url.path)\' [zh] 无法打开不存在的文件 \'\(file.url.path)\'")
         }
-        
-        self.descriptor = try file.system.open(flag1: .readAndWrite, flag2: nil, mode: nil)
+
+        let openType: STFileSystem.OpenType = prot.contains(.write) ? .readAndWrite : .readOnly
+        self.descriptor = try file.system.open(flag1: openType, flag2: nil, mode: nil)
         
         do {
             let info = try file.system.stat(descriptor: descriptor)
-            let fileSize = info.st_size
-            let mapSize = size ?? Int(fileSize)
+            let fileSize = Int(info.st_size)
+            let mapSize = size ?? (fileSize - offset)
+            
+            guard offset >= 0 else {
+                throw STPathError(message: "[en] Offset must be greater than or equal to 0 [zh] 偏移量必须大于或等于 0")
+            }
+            
+            let pageSize = Int(getpagesize())
+            if offset % pageSize != 0 {
+                throw STPathError(message: "[en] Offset must be page-aligned (\(pageSize)) [zh] 偏移量必须按页大小对齐 (\(pageSize))")
+            }
             
             guard mapSize > 0 else {
                 throw STPathError(message: "[en] Mapping size must be greater than 0 [zh] 映射大小必须大于 0")
@@ -133,6 +143,10 @@ public class STFileMMAP {
             
             if mapSize > fileSize {
                 throw STPathError(message: "[en] Mapping size (\(mapSize)) cannot exceed file size (\(fileSize)). Use file.setSize() first. [zh] 映射大小 (\(mapSize)) 不能超过文件大小 (\(fileSize))。请先使用 file.setSize()。")
+            }
+            
+            if offset + mapSize > fileSize {
+                throw STPathError(message: "[en] Mapping range exceeds file size (offset \(offset) + size \(mapSize) > \(fileSize)). [zh] 映射范围超出文件大小（偏移 \(offset) + 大小 \(mapSize) > \(fileSize)）。")
             }
             
             self.size = mapSize

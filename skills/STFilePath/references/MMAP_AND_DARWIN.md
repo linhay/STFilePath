@@ -55,6 +55,10 @@ Memory mapping (Darwin only)
 Important constraints
 - Mapping size must be > 0.
 - Mapping size cannot exceed file size; call `file.setSize(newSize)` first to grow.
+- `offset` must be page-aligned (use `getpagesize()`).
+- `offset` must be >= 0, and `offset + size` cannot exceed file size.
+- If `size` is `nil`, mapping size defaults to `fileSize - offset`.
+- File open mode is derived from `prot` (read-only mappings open the file read-only).
 
 Darwin file APIs
 - `STFile.system -> STFileSystem` exposes:

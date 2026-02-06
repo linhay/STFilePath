@@ -129,6 +129,31 @@ Task {
 }
 ```
 
+### Memory Mapping (mmap)
+
+`STFile` supports scoped memory mapping for fast reads/writes.
+
+```swift
+import STFilePath
+
+let file = STFile("path/to/data.bin")
+try file.setSize(4096)
+
+try file.withMmap { mmap in
+    let data = mmap.read()
+    print("bytes:", data.count)
+    try mmap.write(Data([0x01, 0x02, 0x03]), at: 0)
+    mmap.sync()
+}
+```
+
+Notes:
+- `offset` must be page-aligned (e.g. `getpagesize()`).
+- Mapping size must be greater than 0 and within file bounds.
+- If `size` is `nil`, the mapping size is `fileSize - offset`.
+- Use `.share` to write back to disk, `.private` for copy-on-write.
+- `MAP_SHARED` mappings can observe external process writes once they are flushed (platform behavior applies).
+
 ## License
 
 `STFilePath` is available under the MIT license. See the [LICENSE](LICENSE) file for more info.

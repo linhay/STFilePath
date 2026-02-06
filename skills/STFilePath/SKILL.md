@@ -37,6 +37,10 @@ Capability map (open the referenced file for details)
 - Platform integrations (iOS/macOS): `references/INTEGRATIONS_IOS_MACOS.md`
 - Repo map (where to change code/tests): `references/FILES.md`
 - Tests guidance (existing tests + adding new): `references/TESTS.md`
+
+MMAP updates
+- See `references/MMAP_AND_DARWIN.md` for offset alignment/default size rules.
+- See `references/TESTS.md` for expanded mmap test coverage highlights.
 - Troubleshooting: `references/TROUBLESHOOTING.md`
 - Skill packaging notes: `references/CI_AND_PACKAGING.md`
 
@@ -54,6 +58,7 @@ Minimal expectations and conventions
 Safety and change guidance
 - Avoid breaking public APIs without tests and README updates.
 - For platform-specific behavior (macOS vs iOS), include platform guards and run tests on macOS CI.
+- If asked to create or update skills, follow `$skill-creator` guidance.
 
 Packaging the skill
 - To package this skill as a distributable `.skill`, zip the `.agent/skills/stfilepath` directory (see `references/CI_AND_PACKAGING.md`).

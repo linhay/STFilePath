@@ -1,0 +1,104 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release (on push to main)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute next tag
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_tag="$(git tag --list --sort=-v:refname | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)"
+          if [[ -z "${latest_tag}" ]]; then
+            next_tag="1.0.0"
+          else
+            IFS='.' read -r major minor patch <<< "${latest_tag}"
+            patch=$((patch + 1))
+            next_tag="${major}.${minor}.${patch}"
+          fi
+          echo "next_tag=${next_tag}" >> "${GITHUB_OUTPUT}"
+
+      - name: Package skill artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          import sys
+
+          skill_path = Path("skills/STFilePath").resolve()
+          out_dir = Path("skills/dist").resolve()
+          skill_md = skill_path / "SKILL.md"
+
+          if not skill_md.exists():
+              print(f"[ERROR] SKILL.md not found at {skill_md}")
+              sys.exit(1)
+
+          lines = skill_md.read_text(encoding="utf-8").lstrip("\ufeff").splitlines()
+          if not lines or lines[0].strip() != "---":
+              print("[ERROR] Missing YAML frontmatter in SKILL.md (no opening ---)")
+              sys.exit(1)
+          try:
+              end_index = lines.index("---", 1)
+          except ValueError:
+              print("[ERROR] Missing YAML frontmatter in SKILL.md (no closing ---)")
+              sys.exit(1)
+
+          frontmatter = lines[1:end_index]
+          def get_field(name: str):
+              prefix = f"{name}:"
+              for line in frontmatter:
+                  if line.strip().startswith(prefix):
+                      return line.split(":", 1)[1].strip().strip('"').strip("'")
+              return None
+
+          name = get_field("name")
+          description = get_field("description")
+          if not name or not description:
+              print("[ERROR] SKILL.md frontmatter must include name and description")
+              sys.exit(1)
+
+          out_dir.mkdir(parents=True, exist_ok=True)
+          skill_filename = out_dir / f"{skill_path.name}.skill"
+          skip_names = {".DS_Store"}
+
+          with zipfile.ZipFile(skill_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
+              for file_path in skill_path.rglob("*"):
+                  if file_path.is_file():
+                      if file_path.name in skip_names:
+                          continue
+                      if any(part in ("__MACOSX",) for part in file_path.parts):
+                          continue
+                      arcname = file_path.relative_to(skill_path.parent)
+                      zipf.write(file_path, arcname)
+                      print(f"  Added: {arcname}")
+
+          print(f"\n[OK] Successfully packaged skill to: {skill_filename}")
+          PY
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.next_tag }}
+          name: Release ${{ steps.version.outputs.next_tag }}
+          generate_release_notes: true
+          files: |
+            skills/dist/STFilePath.skill

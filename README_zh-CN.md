@@ -129,6 +129,31 @@ Task {
 }
 ```
 
+### 内存映射（mmap）
+
+`STFile` 支持作用域内存映射，便于快速读写。
+
+```swift
+import STFilePath
+
+let file = STFile("path/to/data.bin")
+try file.setSize(4096)
+
+try file.withMmap { mmap in
+    let data = mmap.read()
+    print("bytes:", data.count)
+    try mmap.write(Data([0x01, 0x02, 0x03]), at: 0)
+    mmap.sync()
+}
+```
+
+注意事项：
+- `offset` 必须按页大小对齐（例如 `getpagesize()`）。
+- 映射大小必须大于 0 且不能超出文件范围。
+- 当 `size` 为 `nil` 时，映射大小为 `fileSize - offset`。
+- `.share` 会写回磁盘，`.private` 为写时复制（不回写）。
+- `MAP_SHARED` 的映射在外部进程写入并刷新后可被观察到（具体行为以平台为准）。
+
 ## 许可证
 
 `STFilePath` 在 MIT 许可下可用。有关更多信息，请参阅 [LICENSE](LICENSE) 文件。
