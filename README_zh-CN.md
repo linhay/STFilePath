@@ -65,6 +65,11 @@ try newFile.delete()
 try myFolder.delete()
 ```
 
+### Skill
+
+本仓库提供 STFilePath 的 Codex Skill，路径为 `skills/STFilePath`。
+其中包含参考文档与脚本，方便维护本库。
+
 ### 文件哈希
 
 ```swift

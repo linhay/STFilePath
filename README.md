@@ -65,6 +65,11 @@ try newFile.delete()
 try myFolder.delete()
 ```
 
+### Skill
+
+This repo includes a Codex skill for STFilePath under `skills/STFilePath`.
+It contains reference docs and scripts for working on this library.
+
 ### File Hashing
 
 ```swift
