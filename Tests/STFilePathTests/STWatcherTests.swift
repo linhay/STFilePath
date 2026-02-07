@@ -101,4 +101,26 @@ struct STWatcherTests {
             #expect(processes.contains(where: { $0.pid == currentPID }))
         #endif
     }
+
+    @Test("DispatchSource Watcher Unavailable on Linux")
+    func testDispatchSourceUnavailableOnLinux() async throws {
+        #if os(Linux)
+            let tempFolder = try createTempFolder()
+            defer { try? tempFolder.delete() }
+
+            let file = tempFolder.file("linux_watch.txt")
+            try file.create(with: "data".data(using: .utf8)!)
+
+            let watcher = file.watcher()
+            let stream = watcher.stream()
+            var iterator = stream.makeAsyncIterator()
+
+            do {
+                _ = try await iterator.next()
+                #expect(Bool(false), "Expected watcher to fail on Linux")
+            } catch let error as STPathError {
+                #expect(error.message.contains("Darwin"))
+            }
+        #endif
+    }
 }

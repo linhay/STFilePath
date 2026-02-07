@@ -1,7 +1,12 @@
 import Foundation
 
+#if canImport(Darwin)
+import Darwin
+#endif
+
 /// [en] A file system watcher backend that uses DispatchSource.
 /// [zh] 使用 DispatchSource 的文件系统监听后端。
+#if canImport(Darwin)
 final class DispatchSourceWatcher: WatcherBackend, @unchecked Sendable {
     private let url: URL
     private var source: DispatchSourceFileSystemObject?
@@ -61,3 +66,24 @@ final class DispatchSourceWatcher: WatcherBackend, @unchecked Sendable {
         stop()
     }
 }
+#else
+final class DispatchSourceWatcher: WatcherBackend, @unchecked Sendable {
+    private let url: URL
+
+    init(url: URL) {
+        self.url = url
+    }
+
+    func start() -> AsyncThrowingStream<STPathChanged, Error> {
+        let (stream, continuation) = AsyncThrowingStream<STPathChanged, Error>.makeStream()
+        continuation.finish(
+            throwing: STPathError(
+                message: "DispatchSource file watcher is only available on Darwin platforms. (\(url.path))"
+            )
+        )
+        return stream
+    }
+
+    func stop() {}
+}
+#endif
