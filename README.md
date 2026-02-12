@@ -90,6 +90,26 @@ Behavior:
 - Optionally `fsync` parent directory (`syncParentDirectory`).
 - Works for create and overwrite paths on Darwin/Linux.
 
+### Root Guard
+
+Use root guard APIs to prevent path escape outside an allowed root.
+
+```swift
+import STFilePath
+
+let root = STFolder("/tmp/sandbox")
+let candidate = STPath("/tmp/sandbox/../sandbox/config.json")
+
+if candidate.isWithin(root: root) {
+    try candidate.assertWithin(root: root)
+}
+```
+
+Behavior:
+- Uses canonical/real paths for comparison.
+- Handles `..` normalization and symlink escape checks.
+- `assertWithin(root:)` throws when path is outside root.
+
 ### File Hashing
 
 ```swift

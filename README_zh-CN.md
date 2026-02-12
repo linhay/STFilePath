@@ -90,6 +90,26 @@ try file.atomicWrite(payload, options: .init(syncParentDirectory: true))
 - 可选对父目录执行 `fsync`（`syncParentDirectory`）。
 - 在 Darwin/Linux 上支持创建与覆盖场景。
 
+### 根目录防逃逸
+
+使用 root guard API 可防止路径逃逸到允许根目录之外。
+
+```swift
+import STFilePath
+
+let root = STFolder("/tmp/sandbox")
+let candidate = STPath("/tmp/sandbox/../sandbox/config.json")
+
+if candidate.isWithin(root: root) {
+    try candidate.assertWithin(root: root)
+}
+```
+
+行为说明：
+- 使用 canonical/real path 进行比较。
+- 处理 `..` 规范化与符号链接逃逸检查。
+- `assertWithin(root:)` 在越界时会抛错。
+
 ### 文件哈希
 
 ```swift
