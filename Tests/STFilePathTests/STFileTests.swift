@@ -104,6 +104,41 @@ struct STFileTests {
         try file.append(data: nil)
         #expect(try file.read() == originalContent)
     }
+
+    @Test("Atomic Write Create and Overwrite")
+    func testAtomicWriteCreateAndOverwrite() throws {
+        let testFolder = try createTestFolder()
+        defer { try? testFolder.delete() }
+        try testFolder.create()
+
+        let file = testFolder.file("atomic.txt")
+        try file.atomicWrite("v1".data(using: .utf8)!)
+        #expect(file.isExists)
+        #expect(try file.read() == "v1")
+
+        try file.atomicWrite("v2".data(using: .utf8)!)
+        #expect(try file.read() == "v2")
+    }
+
+    @Test("Atomic Write Failure Preserves Old Content")
+    func testAtomicWriteFailurePreservesOldContent() throws {
+        let testFolder = try createTestFolder()
+        defer { try? testFolder.delete() }
+        try testFolder.create()
+
+        let file = testFolder.file("atomic_failure.txt")
+        try file.create(with: "old".data(using: .utf8)!)
+
+        #if canImport(Darwin) || os(Linux)
+            defer { try? testFolder.set(permissions: [.ownerRead, .ownerWrite, .ownerExecute]) }
+            try testFolder.set(permissions: [.ownerRead, .ownerExecute])
+
+            #expect(throws: Error.self) {
+                try file.atomicWrite("new".data(using: .utf8)!)
+            }
+            #expect(try file.read() == "old")
+        #endif
+    }
 }
 
     

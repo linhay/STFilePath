@@ -70,6 +70,26 @@ try myFolder.delete()
 This repo includes a Codex skill for STFilePath under `skills/STFilePath`.
 It contains reference docs and scripts for working on this library.
 
+### Atomic Write
+
+Use `atomicWrite` when config/state files need crash-safe replacement semantics.
+
+```swift
+import STFilePath
+
+let file = STFile("/tmp/state.json")
+let payload = Data("{\"ok\":true}".utf8)
+
+try file.atomicWrite(payload, options: .init(syncParentDirectory: true))
+```
+
+Behavior:
+- Write to a temp file in the same directory.
+- `fsync` temp file before replace.
+- Atomically replace target via rename.
+- Optionally `fsync` parent directory (`syncParentDirectory`).
+- Works for create and overwrite paths on Darwin/Linux.
+
 ### File Hashing
 
 ```swift

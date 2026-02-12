@@ -70,6 +70,26 @@ try myFolder.delete()
 本仓库提供 STFilePath 的 Codex Skill，路径为 `skills/STFilePath`。
 其中包含参考文档与脚本，方便维护本库。
 
+### 原子写入
+
+配置/状态文件需要崩溃安全替换时，使用 `atomicWrite`。
+
+```swift
+import STFilePath
+
+let file = STFile("/tmp/state.json")
+let payload = Data("{\"ok\":true}".utf8)
+
+try file.atomicWrite(payload, options: .init(syncParentDirectory: true))
+```
+
+行为说明：
+- 在同目录写入临时文件。
+- 替换前对临时文件执行 `fsync`。
+- 通过 rename 原子替换目标文件。
+- 可选对父目录执行 `fsync`（`syncParentDirectory`）。
+- 在 Darwin/Linux 上支持创建与覆盖场景。
+
 ### 文件哈希
 
 ```swift
