@@ -82,7 +82,21 @@ private func syncDirectory(at path: String) throws {
     }
 }
 #else
-private func syncFile(at _: String) throws {}
-private func replaceAtomically(tempPath _: String, targetPath _: String) throws {}
-private func syncDirectory(at _: String) throws {}
+private func syncFile(at _: String) throws {
+    throw STPathError(
+        message:
+            "[en] atomicWrite is unsupported on this platform. [zh] 当前平台不支持 atomicWrite。")
+}
+
+private func replaceAtomically(tempPath _: String, targetPath _: String) throws {
+    throw STPathError(
+        message:
+            "[en] atomicWrite is unsupported on this platform. [zh] 当前平台不支持 atomicWrite。")
+}
+
+private func syncDirectory(at _: String) throws {
+    throw STPathError(
+        message:
+            "[en] atomicWrite is unsupported on this platform. [zh] 当前平台不支持 atomicWrite。")
+}
 #endif
