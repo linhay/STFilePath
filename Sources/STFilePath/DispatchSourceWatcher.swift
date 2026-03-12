@@ -139,7 +139,7 @@ final class DispatchSourceWatcher: WatcherBackend, @unchecked Sendable {
 
         source.setCancelHandler { [fileDescriptor, watchDescriptor] in
             if watchDescriptor >= 0 {
-                _ = inotify_rm_watch(fileDescriptor, UInt32(watchDescriptor))
+                _ = inotify_rm_watch(fileDescriptor, watchDescriptor)
             }
             if fileDescriptor >= 0 {
                 close(fileDescriptor)
